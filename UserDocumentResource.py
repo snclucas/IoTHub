@@ -17,10 +17,19 @@ class UserDocumentResource:
         else:
             resp.body = self.database_manager.get_all(table)
 
-        print(req.headers)
         if 'AUTHENTICATION' in req.headers:
-            print(jwt.decode(req.headers['AUTHENTICATION'], 'tree', algorithm=['HS256']))
-        # jwt.decode(encoded, 'secret', algorithm=['HS256'])
+            token = req.headers['AUTHENTICATION'].split("Bearer")[1].replace(" ", "")
+
+            jwt_result = ""
+            try:
+                jwt_result = jwt.decode(token, 'tree', algorithm=['HS256'])
+            except jwt.ExpiredSignatureError:
+                resp.body = '{"Token expired"}'
+            except jwt.InvalidTokenError:
+                resp.body = '{"Invalid token"}'
+            print(self.check_jwt(req.headers))
+        else:
+            resp.body = '{"No authentication token supplied"}'
 
     def on_post(self, req, resp, table=None):
         # If table does not exist, create it
@@ -36,3 +45,19 @@ class UserDocumentResource:
             resp.body = '{"message": "Successfully inserted.", "id": '+sid+'}'
         except ValueError:
             raise falcon.HTTPError(falcon.HTTP_400, 'Invalid JSON', 'Could not decode the request body. The ''JSON was incorrect.')
+
+    def check_jwt(self, headers):
+        if 'AUTHENTICATION' in headers:
+            token = headers['AUTHENTICATION'].split("Bearer")[1].replace(" ", "")
+
+            try:
+                jwt_result = jwt.decode(token, 'tree', algorithm=['HS256'])
+                res = '{"status": "OK"}'
+                res['jwt'] = json.dumps(jwt_result)
+                return res
+            except jwt.ExpiredSignatureError:
+                return '{"status": "Fail", "message": "Token expired"}'
+            except jwt.InvalidTokenError:
+                return '{"status": "Fail", "message": "Invalid token"}'
+        else:
+            return '{"status": "Fail", "message": "No authentication token supplied"}'
