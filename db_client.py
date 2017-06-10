@@ -2,14 +2,9 @@ import os
 import rethinkdb as r
 from rethinkdb.errors import RqlRuntimeError, RqlDriverError
 
-RDB_HOST = 'localhost'
-RDB_PORT = 28015
 
-PROJECT_DB = 'todo'
-PROJECT_TABLE = 'notes'
 
-# Set up db connection client
-db_connection = r.connect(RDB_HOST, RDB_PORT)
+
 
 
 # Function is for cross-checking database and table exists
