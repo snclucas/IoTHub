@@ -23,7 +23,7 @@ class AuthenticationManager:
 
     @staticmethod
     def extract_bearer_token(headers):
-        if 'AUTHENTICATION' in headers:
-            return [True, headers['AUTHENTICATION'].split("Bearer")[1].replace(" ", "")]
+        if 'AUTHORIZATION' in headers:
+            return [True, headers['AUTHORIZATION'].split("Bearer")[1].replace(" ", "")]
         else:
             return [False, '{"status": "Fail", "message": "No authentication token supplied"}']

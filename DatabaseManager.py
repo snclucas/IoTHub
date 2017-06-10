@@ -17,5 +17,17 @@ class DatabaseManager:
     def add_table(self, table):
         pass
 
+    def update(self, table, doc_id, doc):
+        pass
+
     def delete_all(self):
+        pass
+
+    def delete_one(self, table, doc_id):
+        pass
+
+    def delete_all(self, table):
+        pass
+
+    def delete_where_is(self, table, where, is_val):
         pass

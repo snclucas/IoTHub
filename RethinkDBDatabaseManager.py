@@ -26,5 +26,20 @@ class RethinkDBDatabaseManager(DatabaseManager):
     def add_table(self, table):
         db_setup(table)
 
+    def update(self, table, doc_id, doc):
+        result = r.db(PROJECT_DB).table(table).get(doc_id).update(doc).run(db_connection)
+        return json.dumps(result)
+
     def delete_all(self, table):
-        r.db(PROJECT_DB).tableDrop(table)
+        result = r.db(PROJECT_DB).table(table).delete(return_changes=True).run(db_connection)
+        return json.dumps(result)
+
+    def delete_one(self, table, doc_id):
+        result = r.db(PROJECT_DB).table(table).get(doc_id).delete(return_changes=True).run(db_connection)
+        return json.dumps(result)
+
+    def delete_where_is(self, table, where, is_val):
+        result = r.db(PROJECT_DB).table(table).filter({where: is_val}).delete().run(db_connection)
+        return json.dumps(result)
+
+
