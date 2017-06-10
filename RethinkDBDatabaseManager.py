@@ -1,6 +1,7 @@
 import json
+import rethinkdb as r
+from rethinkdb.errors import RqlRuntimeError
 
-from db_client import *
 from DatabaseManager import DatabaseManager
 
 RDB_HOST = 'localhost'
@@ -31,7 +32,7 @@ class RethinkDBDatabaseManager(DatabaseManager):
         return sid['generated_keys'][0]
 
     def add_table(self, table):
-        db_setup(table)
+        self.__db_setup__(table)
 
     def update(self, table, doc_id, doc):
         result = r.db(PROJECT_DB).table(table).get(doc_id).update(doc).run(self.db_connection)
@@ -49,4 +50,14 @@ class RethinkDBDatabaseManager(DatabaseManager):
         result = r.db(PROJECT_DB).table(table).filter({where: is_val}).delete().run(self.db_connection)
         return json.dumps(result)
 
-
+    # Function is for cross-checking database and table exists
+    def __db_setup__(self, table):
+        try:
+            r.db_create(PROJECT_DB).run(self.db_connection)
+            print('Database setup completed.')
+        except RqlRuntimeError:
+            try:
+                r.db(PROJECT_DB).table_create(table).run(self.db_connection)
+                print('Table creation completed')
+            except:
+                print('Table already exists. Nothing to do')

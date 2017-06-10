@@ -1,6 +1,5 @@
 import falcon
 import json
-import pprint
 
 from AuthenticationManager import AuthenticationManager
 
@@ -42,11 +41,9 @@ class UserDocumentResource:
                     if explode_on in parsed_json:
                         parsed_json = parsed_json[explode_on]
                     else:
-                        print("Oops")
-            except Exception as ex:
-                raise falcon.HTTPError(falcon.HTTP_400, 'Error', ex.message)
+                        resp.body = json.dumps({"success": "Fail", "message": "Could not find attribute '"+explode_on+"' to explode"})
+                        return
 
-            try:
                 doc_save_result = []
                 if len(parsed_json) > 1:
                     for i in range(len(parsed_json)):
@@ -58,7 +55,8 @@ class UserDocumentResource:
 
                 resp.body = json.dumps({"saved_docs": doc_save_result})
             except ValueError:
-                raise falcon.HTTPError(falcon.HTTP_400, 'Invalid JSON', 'Could not decode the request body. The ''JSON was incorrect.')
+                resp.body = json.dumps({"success": "Fail", "message": "Bad JSON"})
+                return
         else:
             resp.body = jwt_result
 

@@ -20,7 +20,7 @@ class DatabaseManager:
     def update(self, table, doc_id, doc):
         pass
 
-    def delete_all(self):
+    def delete_all(self, table):
         pass
 
     def delete_one(self, table, doc_id):
