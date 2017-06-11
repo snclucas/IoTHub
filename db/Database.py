@@ -1,6 +1,6 @@
 
 
-class DatabaseManager:
+class Database:
 
     def __init__(self):
         pass
@@ -24,9 +24,6 @@ class DatabaseManager:
         pass
 
     def delete_one(self, table, doc_id):
-        pass
-
-    def delete_all(self, table):
         pass
 
     def delete_where_is(self, table, where, is_val):

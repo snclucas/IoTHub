@@ -1,20 +1,21 @@
 import json
+
 import rethinkdb as r
 from rethinkdb.errors import RqlRuntimeError
 
-from DatabaseManager import DatabaseManager
+from db.Database import Database
 
-RDB_HOST = 'localhost'
-RDB_PORT = 28015
 PROJECT_DB = 'todo'
 
 
-class RethinkDBDatabaseManager(DatabaseManager):
+class RethinkDBDatabaseManager(Database):
 
-    def __init__(self):
-        super(DatabaseManager, self).__init__()
+    def __init__(self, config):
+        super(Database, self).__init__()
+        self.rdb_host = config['rdb_host']
+        self.rdb_port = config['rdb_port']
         # Set up db connection client
-        self.db_connection = r.connect(RDB_HOST, RDB_PORT)
+        self.db_connection = r.connect(self.rdb_host, self.rdb_port)
 
     def get_one(self, table, doc_id):
         result = r.db(PROJECT_DB).table(table).get(doc_id).run(self.db_connection)
@@ -63,5 +64,5 @@ class RethinkDBDatabaseManager(DatabaseManager):
             try:
                 r.db(PROJECT_DB).table_create(table).run(self.db_connection)
                 print('Table creation completed')
-            except:
+            except RqlRuntimeError:
                 print('Table already exists. Nothing to do')
