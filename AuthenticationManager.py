@@ -15,6 +15,7 @@ class AuthenticationManager:
                 jwt_result = jwt.decode(token_result, 'secret', algorithm=['HS256'])
                 res = json.loads('{"status": "OK"}')
                 res['jwt'] = json.dumps(jwt_result)
+                print(res['jwt'])
                 return [True, res]
             except jwt.InvalidTokenError:
                 return [False, '{"status": "Fail", "message": "Invalid token"}']

@@ -7,7 +7,6 @@ from DatabaseManager import DatabaseManager
 RDB_HOST = 'localhost'
 RDB_PORT = 28015
 PROJECT_DB = 'todo'
-PROJECT_TABLE = 'notes'
 
 
 class RethinkDBDatabaseManager(DatabaseManager):
@@ -19,6 +18,11 @@ class RethinkDBDatabaseManager(DatabaseManager):
 
     def get_one(self, table, doc_id):
         result = r.db(PROJECT_DB).table(table).get(doc_id).run(self.db_connection)
+        print(result)
+        if result is None or "expiry" in result:
+            # Now check expiry date, if after delete document
+            self.delete_one(table, doc_id)
+            return json.dumps({"Success": "Fail", "message": "Document not found"})
         return json.dumps(result)
 
     def get_all(self, table):
