@@ -16,6 +16,7 @@ class UserManager:
             result = self.find_user_by_username(user['username'])
             if result is None:
                 user['token'] = self.create_token_for_user(user, self.salt)
+                print(user)
                 return self.database.save('users', user)
             else:
                 return json.loads({"status": "fail", "message": "Username already exists"})
@@ -43,5 +44,7 @@ class UserManager:
         else:
             return False
 
-    def create_token_for_user(self, username, salt):
-        return jwt.encode({'username': username['username'], 'is_admin': 'false'}, salt, algorithm='HS256')
+    def create_token_for_user(self, user, salt):
+        username = user['username']
+        is_admin = user['is_admin']
+        return jwt.encode({'username': username, 'is_admin': is_admin}, salt, algorithm='HS256')
