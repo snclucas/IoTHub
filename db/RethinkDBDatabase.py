@@ -1,7 +1,8 @@
 import json
-
+from util import date_util
 import rethinkdb as r
 from rethinkdb.errors import RqlRuntimeError
+from rethinkdb.errors import ReqlOpFailedError
 
 from db.Database import Database
 
@@ -19,24 +20,37 @@ class RethinkDBDatabaseManager(Database):
 
     def get_one_by_id(self, table, doc_id):
         result = r.db(PROJECT_DB).table(table).get(doc_id).run(self.db_connection)
-        if result is None or "expiry" in result:
-            # Now check expiry date, if after delete document
-            self.delete_one(table, doc_id)
+        if result is not None:
+            if "expiry" in result and date_util.__check_date__(result['expiry']):
+                expiry_date = date_util.parse_date(result['expiry'])
+                now = date_util.get_now()
+                print(date_util.get_date_delta(now, expiry_date))
+                if date_util.get_date_delta(now, expiry_date) >= 0:
+                    # Now check expiry date, if after delete document
+                    self.delete_one(table, doc_id)
+                    return json.dumps({"Success": "Fail", "message": "Document not found"})
+            return json.dumps(result)
+        else:
             return json.dumps({"Success": "Fail", "message": "Document not found"})
-        return json.dumps(result)
 
     def get_one_where(self, table, where, is_val):
-        cursor = r.db(PROJECT_DB).table(table).filter({where: is_val}).run(self.db_connection)
-        result = [i for i in cursor]
-        if len(result) == 0:
-            return None
-        else:
-            return json.dumps(result[0])
+        try:
+            cursor = r.db(PROJECT_DB).table(table).filter({where: is_val}).run(self.db_connection)
+            result = [i for i in cursor]
+            if len(result) == 0:
+                return None
+            else:
+                return json.dumps(result[0])
+        except ReqlOpFailedError:
+                return None
 
     def get_all(self, table):
-        note_cursor = r.db(PROJECT_DB).table(table).run(self.db_connection)
-        result = [i for i in note_cursor]
-        return json.dumps(result)
+        try:
+            note_cursor = r.db(PROJECT_DB).table(table).run(self.db_connection)
+            result = [i for i in note_cursor]
+            return json.dumps(result)
+        except ReqlOpFailedError:
+            return None
 
     def save(self, json_data, table):
         sid = r.db(PROJECT_DB).table(table).insert(json_data).run(

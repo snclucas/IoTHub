@@ -12,7 +12,7 @@ def client():
 
 # pytest will inject the object returned by the "client" function
 # as an additional parameter.
-def test_list_images(client):
+def test_list_images(client_in):
     doc = {
         'images': [
             {
@@ -21,7 +21,7 @@ def test_list_images(client):
         ]
     }
 
-    response = client.simulate_get('/test/docs')
+    response = client_in.simulate_get('/test/docs')
     # result_doc = msgpack.unpackb(response.content, encoding='utf-8')
     print(response.content)
     result_doc = response.content
