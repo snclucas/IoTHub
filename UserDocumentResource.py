@@ -13,8 +13,10 @@ class UserDocumentResource:
 
     def on_get(self, req, resp, table=None, doc_id=None):
         [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
+        print([status, jwt_result, username])
         if status is True:
-            table = table + "_" + username
+            table = self.generate_table_name(table, username)
+            print(table)
             if doc_id:
                 resp.body = self.database.get_one_by_id(table, doc_id)
             else:
@@ -25,7 +27,7 @@ class UserDocumentResource:
     def on_post(self, req, resp, table=None):
         [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
         if status is True:
-            table = table + "_" + username
+            table = self.generate_table_name(table, username)
             q_params = falcon.uri.parse_query_string(req.query_string, keep_blank_qs_values=False, parse_qs_csv=True)
             explode = False
             explode_on = ""
@@ -42,26 +44,21 @@ class UserDocumentResource:
                 if explode is True:
                     if explode_on in parsed_json:
                         parsed_json = parsed_json[explode_on]
-
                         if len(parsed_json) > 1:
-                            for i in range(len(parsed_json)):
-                                sid = self.database.save(parsed_json[i], table)
-                                doc_save_result.append(
-                                    {"message": "Successfully inserted.", "id": sid, "doc": parsed_json[i]})
+                            doc_save_result = self.__save_documents__(table, parsed_json)
                         else:
-                            sid = self.database.save(parsed_json, table)
-                            doc_save_result.append({"message": "Successfully inserted.", "id": sid, "doc": parsed_json})
+                            doc_save_result = self.__save_documents__(table, [parsed_json])
                     else:
-                        resp.body = json.dumps({"success": "Fail", "message":
+                        resp.body = json.dumps({"status": "fail", "message":
                                                 "Could not find attribute '"+explode_on+"' to explode"})
                         return
                 else:
                     sid = self.database.save(parsed_json, table)
-                    doc_save_result.append({"message": "Successfully inserted.", "id": sid, "doc": parsed_json})
+                    doc_save_result.append({"status": "success", "message": "Successfully inserted.", "id": sid, "doc": parsed_json})
 
                 resp.body = json.dumps({"saved_docs": doc_save_result})
             except ValueError:
-                resp.body = json.dumps({"success": "Fail", "message": "Bad JSON"})
+                resp.body = json.dumps({"status": "fail", "message": "Bad JSON"})
                 return
         else:
             resp.body = jwt_result
@@ -69,8 +66,7 @@ class UserDocumentResource:
     def on_delete(self, req, resp, table=None, doc_id=None):
         [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
         if status is True:
-            table = table + "_" + username
-            # Return note for particular ID
+            table = self.generate_table_name(table, username)
             if doc_id:
                 resp.body = self.database.delete_one(table, doc_id)
             else:
@@ -81,7 +77,7 @@ class UserDocumentResource:
     def on_put(self, req, resp, table=None, doc_id=None):
         [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
         if status is True:
-            table = table + "_" + username
+            table = self.generate_table_name(table, username)
             # Return note for particular ID
             if doc_id:
                 try:
@@ -95,3 +91,17 @@ class UserDocumentResource:
                 resp.body = json.dumps({"Success": "Fail", "message": "No document found with supplied ID"})
         else:
             resp.body = jwt_result
+
+    def generate_table_name(self, table, username):
+        if username != "":
+            return table + "_" + username
+        else:
+            return table
+
+    def __save_documents__(self, table, docs):
+        doc_save_result = []
+        for i in range(len(docs)):
+            sid = self.database.save(docs[i], table)
+            doc_save_result.append(
+                {"message": "Successfully inserted.", "id": sid, "doc": docs[i]})
+        return doc_save_result
