@@ -17,14 +17,21 @@ class RethinkDBDatabaseManager(Database):
         # Set up db connection client
         self.db_connection = r.connect(self.rdb_host, self.rdb_port)
 
-    def get_one(self, table, doc_id):
+    def get_one_by_id(self, table, doc_id):
         result = r.db(PROJECT_DB).table(table).get(doc_id).run(self.db_connection)
-        print(result)
         if result is None or "expiry" in result:
             # Now check expiry date, if after delete document
             self.delete_one(table, doc_id)
             return json.dumps({"Success": "Fail", "message": "Document not found"})
         return json.dumps(result)
+
+    def get_one_where(self, table, where, is_val):
+        cursor = r.db(PROJECT_DB).table(table).filter({where: is_val}).run(self.db_connection)
+        result = [i for i in cursor]
+        if len(result) == 0:
+            return None
+        else:
+            return json.dumps(result[0])
 
     def get_all(self, table):
         note_cursor = r.db(PROJECT_DB).table(table).run(self.db_connection)
@@ -51,7 +58,7 @@ class RethinkDBDatabaseManager(Database):
         result = r.db(PROJECT_DB).table(table).get(doc_id).delete(return_changes=True).run(self.db_connection)
         return json.dumps(result)
 
-    def delete_where_is(self, table, where, is_val):
+    def delete_where(self, table, where, is_val):
         result = r.db(PROJECT_DB).table(table).filter({where: is_val}).delete().run(self.db_connection)
         return json.dumps(result)
 

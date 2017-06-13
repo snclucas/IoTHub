@@ -1,7 +1,9 @@
+import os
 import json
 
 
 def read_config():
+    mongodb_uri = os.getenv('MONGODB_URI', "")
     config_json = __read_config_file__()
     return config_json
 

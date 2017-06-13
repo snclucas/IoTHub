@@ -3,5 +3,8 @@
   "RethinkDB": {
     "rdb_host": "localhost",
     "rdb_port": "28015"
+  },
+  "MongoDB": {
+    "mongo_url": "..."
   }
 }

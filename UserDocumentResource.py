@@ -7,23 +7,26 @@ from AuthenticationManager import AuthenticationManager
 
 class UserDocumentResource:
 
-    def __init__(self, database_manager):
-        self.database = database_manager.get_db()
+    def __init__(self, database, user_manager):
+        self.database = database
+        self.user_manager = user_manager
+        self.authentication_manager = AuthenticationManager(user_manager)
 
     def on_get(self, req, resp, table=None, doc_id=None):
-        [status, jwt_result] = AuthenticationManager.verify_jwt(req.headers)
+        [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
         if status is True:
-            # Return note for particular ID
+            table = table + "_" + username
             if doc_id:
-                resp.body = self.database.get_one(table, doc_id)
+                resp.body = self.database.get_one_by_id(table, doc_id)
             else:
                 resp.body = self.database.get_all(table)
         else:
             resp.body = jwt_result
 
     def on_post(self, req, resp, table=None):
-        [status, jwt_result] = AuthenticationManager.verify_jwt(req.headers)
+        [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
         if status is True:
+            table = table + "_" + username
             q_params = falcon.uri.parse_query_string(req.query_string, keep_blank_qs_values=False, parse_qs_csv=True)
             explode = False
             explode_on = ""
@@ -36,19 +39,23 @@ class UserDocumentResource:
             try:
                 raw_json = req.stream.read().decode('utf-8')
                 parsed_json = json.loads(raw_json)
+                doc_save_result = []
                 if explode is True:
                     if explode_on in parsed_json:
                         parsed_json = parsed_json[explode_on]
+
+                        if len(parsed_json) > 1:
+                            for i in range(len(parsed_json)):
+                                sid = self.database.save(parsed_json[i], table)
+                                doc_save_result.append(
+                                    {"message": "Successfully inserted.", "id": sid, "doc": parsed_json[i]})
+                        else:
+                            sid = self.database.save(parsed_json, table)
+                            doc_save_result.append({"message": "Successfully inserted.", "id": sid, "doc": parsed_json})
                     else:
                         resp.body = json.dumps({"success": "Fail", "message":
                                                 "Could not find attribute '"+explode_on+"' to explode"})
                         return
-
-                doc_save_result = []
-                if len(parsed_json) > 1:
-                    for i in range(len(parsed_json)):
-                        sid = self.database.save(parsed_json[i], table)
-                        doc_save_result.append({"message": "Successfully inserted.", "id": sid, "doc": parsed_json[i]})
                 else:
                     sid = self.database.save(parsed_json, table)
                     doc_save_result.append({"message": "Successfully inserted.", "id": sid, "doc": parsed_json})
@@ -61,8 +68,9 @@ class UserDocumentResource:
             resp.body = jwt_result
 
     def on_delete(self, req, resp, table=None, doc_id=None):
-        [status, jwt_result] = AuthenticationManager.verify_jwt(req.headers)
+        [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
         if status is True:
+            table = table + "_" + username
             # Return note for particular ID
             if doc_id:
                 resp.body = self.database.delete_one(table, doc_id)
@@ -72,8 +80,9 @@ class UserDocumentResource:
             resp.body = jwt_result
 
     def on_put(self, req, resp, table=None, doc_id=None):
-        [status, jwt_result] = AuthenticationManager.verify_jwt(req.headers)
+        [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
         if status is True:
+            table = table + "_" + username
             # Return note for particular ID
             if doc_id:
                 try:

@@ -1,4 +1,4 @@
-from db import RethinkDBDatabase
+from db import RethinkDBDatabase, MongoDBDatabase
 
 
 class DatabaseManager:
@@ -11,8 +11,10 @@ class DatabaseManager:
             if database not in config_json:
                 raise ValueError("No section for " + database + " supplied")
             else:
-                if 'RethinkDB' == database:
+                if 'rethinkdb' == database.lower():
                     self.db = RethinkDBDatabase.RethinkDBDatabaseManager(config_json[database])
+                elif 'mongodb' == database.lower():
+                    self.db = MongoDBDatabase.MongoDBDatabase(config_json[database])
 
     def get_db(self):
         return self.db
