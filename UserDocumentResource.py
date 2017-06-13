@@ -1,5 +1,5 @@
 import json
-
+from dateutil.parser import parse
 import falcon
 
 from AuthenticationManager import AuthenticationManager
@@ -96,3 +96,10 @@ class UserDocumentResource:
                 resp.body = json.dumps({"Success": "Fail", "message": "No document found with supplied ID"})
         else:
             resp.body = jwt_result
+
+    def __check_date__(self, date_string):
+        try:
+            parse(date_string)
+            return True
+        except ValueError:
+            return False

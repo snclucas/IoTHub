@@ -2,6 +2,7 @@ import json
 
 
 class UserManager:
+    """User manager."""
 
     def __init__(self, database):
         self.database = database
