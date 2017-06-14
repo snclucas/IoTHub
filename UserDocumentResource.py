@@ -53,8 +53,7 @@ class UserDocumentResource:
                                                 "Could not find attribute '"+explode_on+"' to explode"})
                         return
                 else:
-                    sid = self.database.save(parsed_json, table)
-                    doc_save_result.append({"status": "success", "message": "Successfully inserted.", "id": sid, "doc": parsed_json})
+                    doc_save_result = self.__save_documents__(table, [parsed_json])
 
                 resp.body = json.dumps({"saved_docs": doc_save_result})
             except ValueError:
