@@ -12,9 +12,9 @@ class UserDocumentResource:
         self.authentication_manager = AuthenticationManager(user_manager)
 
     def on_get(self, req, resp, table=None, doc_id=None):
-        [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
-        print([status, jwt_result, username])
-        if status is True:
+        [valid_token, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
+        print([valid_token, jwt_result, username])
+        if valid_token is True:
             table = self.generate_table_name(table, username)
             print(table)
             if doc_id:
@@ -55,7 +55,7 @@ class UserDocumentResource:
                 else:
                     doc_save_result = self.__save_documents__(table, [parsed_json])
 
-                resp.body = json.dumps({"saved_docs": doc_save_result})
+                resp.body = json.dumps({"saved_docs": str(doc_save_result)})
             except ValueError:
                 resp.body = json.dumps({"status": "fail", "message": "Bad JSON"})
                 return

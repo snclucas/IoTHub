@@ -8,8 +8,7 @@ import UserDocumentResource as userDoc
 
 api = falcon.API()
 
-config = config.read_config()
-database_manager = DatabaseManager.DatabaseManager(config)
+database_manager = DatabaseManager.DatabaseManager()
 database = database_manager.get_db()
 user_manager = UserManager.UserManager(database)
 

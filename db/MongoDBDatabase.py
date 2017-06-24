@@ -1,18 +1,19 @@
 import json
-from bson.objectid import ObjectId
-
+from bson import ObjectId
 from pymongo import MongoClient
 
 from db.Database import Database
 
-PROJECT_DB = 'todo'
+from util.JSONEncoder import JSONEncoder
+
+PROJECT_DB = 'stashy'
 
 
 class MongoDBDatabase(Database):
 
-    def __init__(self, config):
+    def __init__(self, mongodb_uri):
         super(Database, self).__init__()
-        self.db_connection = MongoClient(config['mongo_url'])
+        self.db_connection = MongoClient(mongodb_uri)
         self.db = self.db_connection[PROJECT_DB]
 
     def get_one_by_id(self, table, doc_id):
@@ -21,10 +22,13 @@ class MongoDBDatabase(Database):
     def get_one_where(self, table, where, is_val):
         pass
 
+    def find_where(self, table, criteria):
+        self.db[table].find(criteria)
+
     def get_all(self, table):
-        cursor = self.db[table].find()
+        cursor = self.db[table].find({})
         result = [i for i in cursor]
-        return json.dumps(result)
+        return json.dumps(result, cls=JSONEncoder).replace('_id', 'id')
 
     def save(self, json_data, table):
         result = self.db[table].insert_one(json_data)

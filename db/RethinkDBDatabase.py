@@ -11,10 +11,10 @@ PROJECT_DB = 'todo'
 
 class RethinkDBDatabaseManager(Database):
 
-    def __init__(self, config):
+    def __init__(self, host, port):
         super(Database, self).__init__()
-        self.rdb_host = config['rdb_host']
-        self.rdb_port = config['rdb_port']
+        self.rdb_host = host
+        self.rdb_port = port
         # Set up db connection client
         self.db_connection = r.connect(self.rdb_host, self.rdb_port)
 
