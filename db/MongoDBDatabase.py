@@ -25,8 +25,9 @@ class MongoDBDatabase(Database):
     def find_where(self, table, criteria):
         self.db[table].find(criteria)
 
-    def get_all(self, table):
-        cursor = self.db[table].find({})
+    def get_all(self, table, filter_by={}, sort=[('_id', 1)]):
+        print(sort)
+        cursor = self.db[table].find(filter_by).sort(sort)
         result = [i for i in cursor]
         return json.dumps(result, cls=JSONEncoder).replace('_id', 'id')
 

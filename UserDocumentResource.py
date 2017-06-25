@@ -13,14 +13,13 @@ class UserDocumentResource:
 
     def on_get(self, req, resp, table=None, doc_id=None):
         [valid_token, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
-        print([valid_token, jwt_result, username])
         if valid_token is True:
             table = self.generate_table_name(table, username)
-            print(table)
             if doc_id:
                 resp.body = self.database.get_one_by_id(table, doc_id)
             else:
-                resp.body = self.database.get_all(table)
+                [sort_val, filter_by] = self.__construct_filter_from_query_params__(req.query_string)
+                resp.body = self.database.get_all(table, filter_by, sort_val)
         else:
             resp.body = jwt_result
 
@@ -104,3 +103,29 @@ class UserDocumentResource:
             doc_save_result.append(
                 {"message": "Successfully inserted.", "id": sid, "doc": docs[i]})
         return doc_save_result
+
+    def __construct_filter_from_query_params__(self, query_params):
+        filter_val = {}
+        sort_val = [('_id', 1)]
+        q_params = falcon.uri.parse_query_string(query_params, keep_blank_qs_values=False, parse_qs_csv=True)
+        sortby_val = '_id'
+        order_val = 1
+        sortby = False
+        if 'sortby' in q_params:
+            sortby = True
+            sortby_val = q_params['sortby']
+        if 'order' in q_params:
+            order_val = q_params['order']
+
+        if sortby is True:
+            sort_val = [(sortby_val, order_val)]
+
+        for key, value in q_params.items():
+            if not self.__reserved__word__(key):
+                filter_val[key] = value
+
+        return [sort_val, filter_val]
+
+    def __reserved__word__(self, word):
+        reserved_words = ['sort','order', 'sortby']
+        return word in reserved_words
