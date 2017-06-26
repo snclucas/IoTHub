@@ -18,8 +18,8 @@ class UserDocumentResource:
             if doc_id:
                 resp.body = self.database.get_one_by_id(table, doc_id)
             else:
-                [sort_val, filter_by] = self.__construct_filter_from_query_params__(req.query_string)
-                resp.body = self.database.get_all(table, filter_by, sort_val)
+                [filter_by, sort_by] = self.__construct_filter_from_query_params__(req.query_string)
+                resp.body = self.database.get_all(table, filter_by, sort_by)
         else:
             resp.body = jwt_result
 
@@ -106,7 +106,7 @@ class UserDocumentResource:
 
     def __construct_filter_from_query_params__(self, query_params):
         filter_val = {}
-        sort_val = [('_id', 1)]
+        sort_by = [('_id', 1)]
         q_params = falcon.uri.parse_query_string(query_params, keep_blank_qs_values=False, parse_qs_csv=True)
         sortby_val = '_id'
         order_val = 1
@@ -116,16 +116,20 @@ class UserDocumentResource:
             sortby_val = q_params['sortby']
         if 'order' in q_params:
             order_val = q_params['order']
+            if order_val.lower() == 'asc' or order_val == 1:
+                order_val = 1
+            elif order_val.lower() == 'desc' or order_val == -1:
+                order_val = -1
 
         if sortby is True:
-            sort_val = [(sortby_val, order_val)]
+            sort_by = [(sortby_val, int(order_val))]
 
         for key, value in q_params.items():
             if not self.__reserved__word__(key):
                 filter_val[key] = value
 
-        return [sort_val, filter_val]
+        return [filter_val, sort_by]
 
     def __reserved__word__(self, word):
-        reserved_words = ['sort','order', 'sortby']
+        reserved_words = ['sort', 'order', 'sortby', 'limit', 'skip']
         return word in reserved_words
