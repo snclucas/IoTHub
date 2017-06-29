@@ -1,6 +1,7 @@
 import json
 from bson import ObjectId
 from pymongo import MongoClient
+from pymongo.errors import OperationFailure
 
 from db.Database import Database
 
@@ -17,19 +18,22 @@ class MongoDBDatabase(Database):
         self.db = self.db_connection[PROJECT_DB]
 
     def get_one_by_id(self, table, doc_id):
-        pass
-
-    def get_one_where(self, table, where, is_val):
-        pass
+        try:
+            result = self.db[table].find_one({"_id": ObjectId(doc_id)})
+            return json.dumps(result, cls=JSONEncoder).replace('_id', 'id')
+        except OperationFailure:
+            return json.dumps({"status": "fail", "message": "Could not connect to DB"})
 
     def find_where(self, table, criteria):
         self.db[table].find(criteria)
 
     def get_all(self, table, filter_by={}, sort=[('_id', 1)]):
-        print(sort)
-        cursor = self.db[table].find(filter_by).sort(sort)
-        result = [i for i in cursor]
-        return json.dumps(result, cls=JSONEncoder).replace('_id', 'id')
+        try:
+            cursor = self.db[table].find(filter_by).sort(sort)
+            result = [i for i in cursor]
+            return json.dumps(result, cls=JSONEncoder).replace('_id', 'id')
+        except OperationFailure:
+            return json.dumps({"status": "fail", "message": "Could not connect to DB"})
 
     def save(self, json_data, table):
         result = self.db[table].insert_one(json_data)

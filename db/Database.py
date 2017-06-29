@@ -12,11 +12,7 @@ class Database:
         return
 
     @abc.abstractmethod
-    def get_one_where(self, table, where, is_val):
-        return
-
-    @abc.abstractmethod
-    def get_all(self, table):
+    def get_all(self, table, filter_by, sort):
         return
 
     @abc.abstractmethod

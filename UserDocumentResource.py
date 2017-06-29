@@ -25,6 +25,7 @@ class UserDocumentResource:
 
     def on_post(self, req, resp, table=None):
         [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
+        metadata = self.__construct_metadata_from_query_params__(req.query_string)
         if status is True:
             table = self.generate_table_name(table, username)
             q_params = falcon.uri.parse_query_string(req.query_string, keep_blank_qs_values=False, parse_qs_csv=True)
@@ -105,6 +106,7 @@ class UserDocumentResource:
         return doc_save_result
 
     def __construct_filter_from_query_params__(self, query_params):
+        metadata = {}
         filter_val = {}
         sort_by = [('_id', 1)]
         q_params = falcon.uri.parse_query_string(query_params, keep_blank_qs_values=False, parse_qs_csv=True)
@@ -125,10 +127,22 @@ class UserDocumentResource:
             sort_by = [(sortby_val, int(order_val))]
 
         for key, value in q_params.items():
-            if not self.__reserved__word__(key):
+            if key[:8] == 'stashy::' or key[:4] == 'st::':
+                metadata[key[8:]] = value
+            elif not self.__reserved__word__(key):
                 filter_val[key] = value
 
-        return [filter_val, sort_by]
+        return [filter_val, sort_by, metadata]
+
+    def __construct_metadata_from_query_params__(self, query_params):
+        metadata = {}
+        q_params = falcon.uri.parse_query_string(query_params, keep_blank_qs_values=False, parse_qs_csv=True)
+
+        for key, value in q_params.items():
+            if key[:8] == 'stashy::' or key[:4] == 'st::':
+                metadata[key[8:]] = value
+
+        return metadata
 
     def __reserved__word__(self, word):
         reserved_words = ['sort', 'order', 'sortby', 'limit', 'skip']
