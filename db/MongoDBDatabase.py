@@ -36,6 +36,7 @@ class MongoDBDatabase(Database):
             return json.dumps({"status": "fail", "message": "Could not connect to DB"})
 
     def save(self, json_data, table):
+        print(json_data)
         result = self.db[table].insert_one(json_data)
         return result.inserted_id
 

@@ -1,6 +1,8 @@
 import json
 import falcon
 
+import config
+from util.JSONEncoder import JSONEncoder
 from AuthenticationManager import AuthenticationManager
 
 
@@ -28,26 +30,21 @@ class UserDocumentResource:
         metadata = self.__construct_metadata_from_query_params__(req.query_string)
         if status is True:
             table = self.generate_table_name(table, username)
-            q_params = falcon.uri.parse_query_string(req.query_string, keep_blank_qs_values=False, parse_qs_csv=True)
             explode = False
             explode_on = ""
-            if 'explode' in q_params:
+            if 'explode' in metadata:
                 explode = True
-                explode_on = q_params['explode']
+                explode_on = metadata['explode']
 
             # If table does not exist, create it
             self.database.add_table(table)
             try:
                 raw_json = req.stream.read().decode('utf-8')
                 parsed_json = json.loads(raw_json)
-                doc_save_result = []
                 if explode is True:
                     if explode_on in parsed_json:
                         parsed_json = parsed_json[explode_on]
-                        if len(parsed_json) > 1:
-                            doc_save_result = self.__save_documents__(table, parsed_json)
-                        else:
-                            doc_save_result = self.__save_documents__(table, [parsed_json])
+                        doc_save_result = self.__save_documents__(table, parsed_json)
                     else:
                         resp.body = json.dumps({"status": "fail", "message":
                                                 "Could not find attribute '"+explode_on+"' to explode"})
@@ -55,7 +52,7 @@ class UserDocumentResource:
                 else:
                     doc_save_result = self.__save_documents__(table, [parsed_json])
 
-                resp.body = json.dumps({"saved_docs": str(doc_save_result)})
+                resp.body = json.dumps(doc_save_result, cls=JSONEncoder).replace('_id', 'id')
             except ValueError:
                 resp.body = json.dumps({"status": "fail", "message": "Bad JSON"})
                 return
@@ -100,13 +97,11 @@ class UserDocumentResource:
     def __save_documents__(self, table, docs):
         doc_save_result = []
         for i in range(len(docs)):
-            sid = self.database.save(docs[i], table)
-            doc_save_result.append(
-                {"message": "Successfully inserted.", "id": sid, "doc": docs[i]})
+            self.database.save(docs[i], table)
+            doc_save_result.append(docs[i])
         return doc_save_result
 
     def __construct_filter_from_query_params__(self, query_params):
-        metadata = {}
         filter_val = {}
         sort_by = [('_id', 1)]
         q_params = falcon.uri.parse_query_string(query_params, keep_blank_qs_values=False, parse_qs_csv=True)
@@ -126,24 +121,22 @@ class UserDocumentResource:
         if sortby is True:
             sort_by = [(sortby_val, int(order_val))]
 
+        # Get user supplied filters
         for key, value in q_params.items():
-            if key[:8] == 'stashy::' or key[:4] == 'st::':
-                metadata[key[8:]] = value
-            elif not self.__reserved__word__(key):
+            if not self.__reserved__word__(key):
                 filter_val[key] = value
 
-        return [filter_val, sort_by, metadata]
+        return [filter_val, sort_by]
 
     def __construct_metadata_from_query_params__(self, query_params):
         metadata = {}
         q_params = falcon.uri.parse_query_string(query_params, keep_blank_qs_values=False, parse_qs_csv=True)
 
         for key, value in q_params.items():
-            if key[:8] == 'stashy::' or key[:4] == 'st::':
-                metadata[key[8:]] = value
+            if key[:len(config.metadata_key)] == config.metadata_key:
+                metadata[key[len(config.metadata_key):]] = value
 
         return metadata
 
     def __reserved__word__(self, word):
-        reserved_words = ['sort', 'order', 'sortby', 'limit', 'skip']
-        return word in reserved_words
+        return word in config.reserved_words
