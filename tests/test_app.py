@@ -1,9 +1,5 @@
-# -----------------------------------------------------------------
-# unittest
-# -----------------------------------------------------------------
-from urllib.request import urlopen
+
 from falcon import testing
-import base64
 from urllib.parse import urlparse
 import http.client
 
