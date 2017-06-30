@@ -16,23 +16,27 @@ class UserDocumentResource:
 
     def on_get(self, req, resp, table=None, doc_id=None):
         [valid_token, jwt_result, user] = self.authentication_manager.verify_jwt(req.headers)
-        if valid_token is True and user is not None:
-            table = self.generate_table_name(table, user['local']['displayName'])
-            if doc_id:
-                resp.body = self.database.get_one_by_id(table, doc_id)
-            else:
-                [filter_by, sort_by] = self.__construct_filter_from_query_params__(req.query_string)
-                resp.body = self.database.get_all(table, filter_by, sort_by)
-        else:
+
+        if valid_token is False or user is None:
             resp.body = jwt_result
+            return
+
+        table = self.generate_table_name(table, user['local']['displayName'])
+        if doc_id:
+            resp.body = self.database.get_one_by_id(table, doc_id)
+        else:
+            [filter_by, sort_by] = self.__construct_filter_from_query_params__(req.query_string)
+            resp.body = self.database.get_all(table, filter_by, sort_by)
 
     def on_post(self, req, resp, table=None):
-        [status, jwt_result, user] = self.authentication_manager.verify_jwt(req.headers)
-        if user is None:
+        [valid_token, jwt_result, user] = self.authentication_manager.verify_jwt(req.headers)
+
+        if user is None or valid_token is False:
             resp.body = jwt_result
+
         metadata = self.__construct_metadata_from_query_params__(req.query_string)
 
-        if status is True:
+        if valid_token is True:
             add_datestamp = user['addDatestampToPosts']
             table = self.generate_table_name(table, user['local']['displayName'])
             explode = False

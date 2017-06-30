@@ -12,3 +12,5 @@ rethink_db_port = os.getenv('RETHINK_DB_PORT', "28015")
 metadata_key = "stashy::"
 
 reserved_words = ['sort', 'order', 'sortby', 'limit', 'skip']
+
+token_secret = '0BR5zqTw7rlDyPOLtcHpRsmwwSQuDkZbij5yTMZgzZ9gi5kKRl'

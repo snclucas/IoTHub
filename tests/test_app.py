@@ -1,30 +1,33 @@
-import falcon
+# -----------------------------------------------------------------
+# unittest
+# -----------------------------------------------------------------
+from urllib.request import urlopen
 from falcon import testing
-import pytest
-
-from app import api
-
-
-@pytest.fixture
-def client():
-    return testing.TestClient(api)
+import base64
+from urllib.parse import urlparse
+import http.client
 
 
-# pytest will inject the object returned by the "client" function
-# as an additional parameter.
-def test_list_images(client_in):
-    doc = {
-        'images': [
-            {
-                'href': '/images/1eaf6ef1-7f2d-4ecc-a8d5-6e8adba7cc0e.png'
-            }
-        ]
-    }
+class StashyTestCase(testing.TestCase):
+    def setUp(self):
+        super(StashyTestCase, self).setUp()
 
-    response = client_in.simulate_get('/test/docs')
-    # result_doc = msgpack.unpackb(response.content, encoding='utf-8')
-    print(response.content)
-    result_doc = response.content
 
-    assert result_doc == doc
-    assert response.status == falcon.HTTP_OK
+class TestStashy(StashyTestCase):
+    def test_no_token(self):
+        url = 'http://localhost:8000/d/test/docs'
+        headers = {"Content-Type": "application/json"}
+        domain = urlparse(url).netloc
+        connection = http.client.HTTPConnection(domain)
+        connection.request("GET", url, headers=headers)
+        response = connection.getresponse()
+        self.assertEqual(response.read().decode(), '{"status": "Fail", "message": "No authentication token supplied"}')
+
+    def test_invalid_token(self):
+        url = 'http://localhost:8000/d/test/docs'
+        headers = {"Content-Type": "application/json", "Authorization": "Bearer 3453"}
+        domain = urlparse(url).netloc
+        connection = http.client.HTTPConnection(domain)
+        connection.request("GET", url, headers=headers)
+        response = connection.getresponse()
+        self.assertEqual(response.read().decode(), '{"status": "Fail", "message": "Invalid token"}')

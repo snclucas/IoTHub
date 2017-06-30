@@ -16,7 +16,6 @@ class UserManager:
             result = self.find_user_by_username(user['username'])
             if result is None:
                 user['token'] = self.create_token_for_user(user, self.salt)
-                print(user)
                 return self.database.save('users', user)
             else:
                 return json.loads({"status": "fail", "message": "Username already exists"})
