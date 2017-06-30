@@ -3,6 +3,7 @@ from bson import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import OperationFailure
 
+from util import date_util
 from db.Database import Database
 
 from util.JSONEncoder import JSONEncoder
@@ -20,6 +21,15 @@ class MongoDBDatabase(Database):
     def get_one_by_id(self, table, doc_id):
         try:
             result = self.db[table].find_one({"_id": ObjectId(doc_id)})
+            if result is not None:
+                if "expiry" in result and date_util.__check_date__(result['expiry']):
+                    expiry_date = date_util.parse_date(result['expiry'])
+                    now = date_util.get_now()
+                    print(date_util.get_date_delta(now, expiry_date))
+                    if date_util.get_date_delta(now, expiry_date) >= 0:
+                        # Now check expiry date, if after delete document
+                        self.delete_one(table, doc_id)
+                        return json.dumps({"Success": "Fail", "message": "Document not found"})
             return json.dumps(result, cls=JSONEncoder).replace('_id', 'id')
         except OperationFailure:
             return json.dumps({"status": "fail", "message": "Could not connect to DB"})
@@ -30,13 +40,14 @@ class MongoDBDatabase(Database):
     def get_all(self, table, filter_by={}, sort=[('_id', 1)]):
         try:
             cursor = self.db[table].find(filter_by).sort(sort)
+            if cursor.count() == 0:
+                return None
             result = [i for i in cursor]
             return json.dumps(result, cls=JSONEncoder).replace('_id', 'id')
         except OperationFailure:
             return json.dumps({"status": "fail", "message": "Could not connect to DB"})
 
     def save(self, json_data, table):
-        print(json_data)
         result = self.db[table].insert_one(json_data)
         return result.inserted_id
 

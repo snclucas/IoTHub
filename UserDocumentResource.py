@@ -1,5 +1,6 @@
 import json
 import falcon
+from datetime import *
 
 import config
 from util.JSONEncoder import JSONEncoder
@@ -14,9 +15,9 @@ class UserDocumentResource:
         self.authentication_manager = AuthenticationManager(user_manager)
 
     def on_get(self, req, resp, table=None, doc_id=None):
-        [valid_token, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
-        if valid_token is True:
-            table = self.generate_table_name(table, username)
+        [valid_token, jwt_result, user] = self.authentication_manager.verify_jwt(req.headers)
+        if valid_token is True and user is not None:
+            table = self.generate_table_name(table, user['local']['displayName'])
             if doc_id:
                 resp.body = self.database.get_one_by_id(table, doc_id)
             else:
@@ -26,10 +27,11 @@ class UserDocumentResource:
             resp.body = jwt_result
 
     def on_post(self, req, resp, table=None):
-        [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
+        [status, jwt_result, user] = self.authentication_manager.verify_jwt(req.headers)
         metadata = self.__construct_metadata_from_query_params__(req.query_string)
+        add_datestamp = user['addDatestampToPosts']
         if status is True:
-            table = self.generate_table_name(table, username)
+            table = self.generate_table_name(table, user['local']['displayName'])
             explode = False
             explode_on = ""
             if 'explode' in metadata:
@@ -41,16 +43,17 @@ class UserDocumentResource:
             try:
                 raw_json = req.stream.read().decode('utf-8')
                 parsed_json = json.loads(raw_json)
+
                 if explode is True:
                     if explode_on in parsed_json:
                         parsed_json = parsed_json[explode_on]
-                        doc_save_result = self.__save_documents__(table, parsed_json)
+                        doc_save_result = self.__save_documents__(table, parsed_json, add_datestamp)
                     else:
                         resp.body = json.dumps({"status": "fail", "message":
                                                 "Could not find attribute '"+explode_on+"' to explode"})
                         return
                 else:
-                    doc_save_result = self.__save_documents__(table, [parsed_json])
+                    doc_save_result = self.__save_documents__(table, [parsed_json], add_datestamp)
 
                 resp.body = json.dumps(doc_save_result, cls=JSONEncoder).replace('_id', 'id')
             except ValueError:
@@ -94,9 +97,11 @@ class UserDocumentResource:
         else:
             return table
 
-    def __save_documents__(self, table, docs):
+    def __save_documents__(self, table, docs, add_datestamp):
         doc_save_result = []
         for i in range(len(docs)):
+            if add_datestamp:
+                docs[i]['created'] = datetime.now().strftime("%B %d, %Y")
             self.database.save(docs[i], table)
             doc_save_result.append(docs[i])
         return doc_save_result

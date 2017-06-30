@@ -4,7 +4,7 @@ import jwt
 
 class AuthenticationManager:
 
-    check_token = False
+    check_token = True
 
     def __init__(self, user_manager):
         self.user_manager = user_manager
@@ -18,18 +18,13 @@ class AuthenticationManager:
         if success is True:
             try:
                 jwt_result = jwt.decode(token_result, 'secret', algorithm=['HS256'])
-                user_is_admin = self.user_is_admin(jwt_result)
-                username = ""
-                if user_is_admin is False:
-                    user = self.user_manager.find_user_by_token(token_result)
-                    if user is None:
-                        return [False, '{"status": "fail", "message": "No user with that token"}', None]
-                    else:
-                        username = user['username']
+                user = self.user_manager.find_user_by_token(token_result)
+                if user is None:
+                    return [False, '{"status": "fail", "message": "No user with that token"}', None]
 
                 res = json.loads('{"status": "OK"}')
                 res['jwt'] = json.dumps(jwt_result)
-                return [True, res, username]
+                return [True, res, user]
             except jwt.InvalidTokenError as ex:
                 print(ex)
                 return [False, '{"status": "Fail", "message": "Invalid token"}', None]

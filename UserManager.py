@@ -24,10 +24,9 @@ class UserManager:
             return json.loads({"status": "fail", "message": "Bad user data"})
 
     def find_user_by_token(self, token):
-        result = self.database.get_one_where('users', 'token', token)
-        print(result)
+        result = self.database.get_all('users', {"tokens.token": token})
         if result is not None:
-            return json.loads(self.database.get_one_where('users', 'token', token))
+            return json.loads(result)[0]
         else:
             return None
 
