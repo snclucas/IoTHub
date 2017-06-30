@@ -17,7 +17,7 @@ class AuthenticationManager:
 
         if success is True:
             try:
-                jwt_result = jwt.decode(token_result, 'secret', algorithm=['HS256'])
+                jwt_result = jwt.decode(token_result, '0BR5zqTw7rlDyPOLtcHpRsmwwSQuDkZbij5yTMZgzZ9gi5kKRl', algorithm=['HS256'])
                 user = self.user_manager.find_user_by_token(token_result)
                 if user is None:
                     return [False, '{"status": "fail", "message": "No user with that token"}', None]

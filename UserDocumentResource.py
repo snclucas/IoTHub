@@ -28,9 +28,12 @@ class UserDocumentResource:
 
     def on_post(self, req, resp, table=None):
         [status, jwt_result, user] = self.authentication_manager.verify_jwt(req.headers)
+        if user is None:
+            resp.body = jwt_result
         metadata = self.__construct_metadata_from_query_params__(req.query_string)
-        add_datestamp = user['addDatestampToPosts']
+
         if status is True:
+            add_datestamp = user['addDatestampToPosts']
             table = self.generate_table_name(table, user['local']['displayName'])
             explode = False
             explode_on = ""
