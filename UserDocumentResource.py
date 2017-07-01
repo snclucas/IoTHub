@@ -108,7 +108,7 @@ class UserDocumentResource:
         doc_save_result = []
         for i in range(len(docs)):
             if add_datestamp:
-                docs[i]['created'] = datetime.now().strftime("%B %d, %Y")
+                docs[i]['created'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             self.database.save(docs[i], table)
             doc_save_result.append(docs[i])
         return doc_save_result

@@ -1,4 +1,4 @@
-from db import RethinkDBDatabase, MongoDBDatabase
+from db import MongoDBDatabase
 import config
 
 
@@ -10,10 +10,7 @@ class DatabaseManager:
             raise ValueError("No database supplied")
         else:
             database = config.db
-            print(database)
-            if 'rethinkdb' == database.lower():
-                self.db = RethinkDBDatabase.RethinkDBDatabaseManager(config.rethink_db_host, config.rethink_db_port)
-            elif 'mongodb' == database.lower():
+            if 'mongodb' == database.lower():
                 self.db = MongoDBDatabase.MongoDBDatabase(config.mongodb_uri)
             else:
                 raise ValueError("No database")

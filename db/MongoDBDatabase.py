@@ -37,7 +37,11 @@ class MongoDBDatabase(Database):
     def find_where(self, table, criteria):
         self.db[table].find(criteria)
 
-    def get_all(self, table, filter_by={}, sort=[('_id', 1)]):
+    def get_all(self, table, filter_by=None, sort=None):
+        if filter_by is None:
+            filter_by = {}
+        if sort is None:
+            sort = [('_id', 1)]
         try:
             cursor = self.db[table].find(filter_by).sort(sort)
             if cursor.count() == 0:

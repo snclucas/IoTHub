@@ -3,6 +3,7 @@ import jwt
 
 import config
 
+
 class AuthenticationManager:
 
     check_token = True
