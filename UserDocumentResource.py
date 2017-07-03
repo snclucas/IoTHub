@@ -14,65 +14,80 @@ class UserDocumentResource:
         self.user_manager = user_manager
         self.authentication_manager = AuthenticationManager(user_manager)
 
-    def on_get(self, req, resp, table=None, doc_id=None):
+    def validate_json_content(req, resp, resource, params):
+        if req.content_type not in "application/json":
+            msg = 'Body of request should be application/json'
+            raise falcon.HTTPBadRequest('Bad request', msg)
+
+    @falcon.before(validate_json_content)
+    def on_get(self, req, resp, endpoint_type, table=None, doc_id=None):
+        [valid_end_point, end_point_type] = self.__check_endpoint__(endpoint_type)
+
+        if valid_end_point is False:
+            raise falcon.HTTPBadRequest('Bad request', "404")
+
         [valid_token, jwt_result, user] = self.authentication_manager.verify_jwt(req.headers)
 
         if valid_token is False or user is None:
             resp.body = jwt_result
             return
 
-        table = self.generate_table_name(table, user['local']['displayName'])
+        table = self.__generate_table_name__(table, user['local']['displayName'], end_point_type)
         if doc_id:
             resp.body = self.database.get_one_by_id(table, doc_id)
         else:
             [filter_by, sort_by] = self.__construct_filter_from_query_params__(req.query_string)
             resp.body = self.database.get_all(table, filter_by, sort_by)
 
-    def on_post(self, req, resp, table=None):
+    @falcon.before(validate_json_content)
+    def on_post(self, req, resp, endpoint_type, table=None):
+        [valid_end_point, end_point_type] = self.__check_endpoint__(endpoint_type)
+        if valid_end_point is False:
+            raise falcon.HTTPBadRequest('Bad request', "404")
+
         [valid_token, jwt_result, user] = self.authentication_manager.verify_jwt(req.headers)
 
         if user is None or valid_token is False:
             resp.body = jwt_result
 
+        if end_point_type == 'public':
+            self.__check_user_can_post_to_endpoint(user, table)
+
         metadata = self.__construct_metadata_from_query_params__(req.query_string)
 
-        if valid_token is True:
-            add_datestamp = user['addDatestampToPosts']
-            table = self.generate_table_name(table, user['local']['displayName'])
-            explode = False
-            explode_on = ""
+        add_datestamp = user['addDatestampToPosts']
+        table = self.__generate_table_name__(table, user['local']['displayName'], end_point_type)
+
+        # If table does not exist, create it
+        self.database.add_table(table)
+        try:
+            raw_json = req.stream.read().decode('utf-8')
+            parsed_json = json.loads(raw_json)
+
             if 'explode' in metadata:
-                explode = True
-                explode_on = metadata['explode']
-
-            # If table does not exist, create it
-            self.database.add_table(table)
-            try:
-                raw_json = req.stream.read().decode('utf-8')
-                parsed_json = json.loads(raw_json)
-
-                if explode is True:
-                    if explode_on in parsed_json:
-                        parsed_json = parsed_json[explode_on]
-                        doc_save_result = self.__save_documents__(table, parsed_json, add_datestamp)
-                    else:
-                        resp.body = json.dumps({"status": "fail", "message":
-                                                "Could not find attribute '"+explode_on+"' to explode"})
-                        return
+                if metadata['explode'] in parsed_json:
+                    parsed_json = parsed_json[metadata['explode']]
+                    doc_save_result = self.__save_documents__(table, parsed_json, add_datestamp)
                 else:
-                    doc_save_result = self.__save_documents__(table, [parsed_json], add_datestamp)
+                    resp.body = json.dumps({"status": "fail", "message":
+                                            "Could not find attribute '"+metadata['explode']+"' to explode"})
+                    return
+            else:
+                doc_save_result = self.__save_documents__(table, [parsed_json], add_datestamp)
 
-                resp.body = json.dumps(doc_save_result, cls=JSONEncoder).replace('_id', 'id')
-            except ValueError:
-                resp.body = json.dumps({"status": "fail", "message": "Bad JSON"})
-                return
-        else:
-            resp.body = jwt_result
+            resp.body = json.dumps(doc_save_result, cls=JSONEncoder).replace('_id', 'id')
+        except ValueError:
+            resp.body = json.dumps({"status": "fail", "message": "Bad JSON"})
+            return
 
-    def on_delete(self, req, resp, table=None, doc_id=None):
+    def on_delete(self, req, resp, endpoint_type, table=None, doc_id=None):
+        [valid_end_point, end_point_type] = self.__check_endpoint__(endpoint_type)
+        if valid_end_point is False:
+            raise falcon.HTTPBadRequest('Bad request', "404")
+
         [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
         if status is True:
-            table = self.generate_table_name(table, username)
+            table = self.__generate_table_name__(table, username, end_point_type)
             if doc_id:
                 resp.body = self.database.delete_one(table, doc_id)
             else:
@@ -80,10 +95,15 @@ class UserDocumentResource:
         else:
             resp.body = jwt_result
 
-    def on_put(self, req, resp, table=None, doc_id=None):
+    @falcon.before(validate_json_content)
+    def on_put(self, req, resp, endpoint_type, table=None, doc_id=None):
+        [valid_end_point, end_point_type] = self.__check_endpoint__(endpoint_type)
+        if valid_end_point is False:
+            raise falcon.HTTPBadRequest('Bad request', "404")
+
         [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
         if status is True:
-            table = self.generate_table_name(table, username)
+            table = self.__generate_table_name__(table, username, end_point_type)
             # Return note for particular ID
             if doc_id:
                 try:
@@ -98,9 +118,14 @@ class UserDocumentResource:
         else:
             resp.body = jwt_result
 
-    def generate_table_name(self, table, username):
-        if username != "":
-            return table + "_" + username
+    def __generate_table_name__(self, table, username, end_point_type):
+        """Append the name of the user to the table name."""
+        # If private endpoint
+        if end_point_type == 'private':
+            if username != "":
+                return table + "_" + username
+            else:
+                return table
         else:
             return table
 
@@ -152,3 +177,20 @@ class UserDocumentResource:
 
     def __reserved__word__(self, word):
         return word in config.reserved_words
+
+    def __check_endpoint__(self, end_point):
+        if end_point == 'd':
+            return [True, 'private']
+        elif end_point == 'p':
+            return [True, 'public']
+        else:
+            return [False, '']
+
+    def __check_user_can_post_to_endpoint(self, user, table):
+        allowed_to_post_to_endpoint = False
+        for public_endpoint in user['publicEndpoints']:
+            if public_endpoint['endpoint'] == table:
+                allowed_to_post_to_endpoint = True
+
+        if allowed_to_post_to_endpoint is False:
+            raise falcon.HTTPBadRequest('Bad request', "Cannot post to this endpoint")
