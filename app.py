@@ -12,6 +12,7 @@ database_manager = DatabaseManager.DatabaseManager()
 database = database_manager.get_db()
 user_manager = UserManager.UserManager(database)
 
+api.add_route('/', serverInfo.ServerInfoHTML())
 api.add_route('/server-info', serverInfo.ServerInfo())
 
 api.add_route('/{endpoint_type}/{table}/docs', userDoc.UserDocumentResource(database, user_manager))
