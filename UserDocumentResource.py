@@ -62,7 +62,9 @@ class UserDocumentResource:
         # If table does not exist, create it
         self.database.add_table(table)
         try:
+
             raw_json = req.stream.read().decode('utf-8')
+            print(raw_json)
             parsed_json = json.loads(raw_json)
 
             if 'explode' in metadata:
