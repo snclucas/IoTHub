@@ -26,10 +26,10 @@ class UserDocumentResource:
         if valid_end_point is False:
             raise falcon.HTTPBadRequest('Bad request', "404")
 
-        [valid_token, jwt_result, user] = self.authentication_manager.verify_jwt(req.headers)
+        [valid_token, token_result, user] = self.authentication_manager.verify_token(req.headers)
 
         if valid_token is False or user is None:
-            resp.body = jwt_result
+            resp.body = token_result
             return
 
         table = self.__generate_table_name__(table, user['local']['displayName'], end_point_type)
@@ -45,10 +45,10 @@ class UserDocumentResource:
         if valid_end_point is False:
             raise falcon.HTTPBadRequest('Bad request', "404")
 
-        [valid_token, jwt_result, user] = self.authentication_manager.verify_jwt(req.headers)
+        [valid_token, token_result, user] = self.authentication_manager.verify_token(req.headers)
 
         if user is None or valid_token is False:
-            resp.body = jwt_result
+            resp.body = token_result
 
         if end_point_type == 'public':
             self.__check_user_can_post_to_endpoint(user, table)
@@ -85,7 +85,7 @@ class UserDocumentResource:
         if valid_end_point is False:
             raise falcon.HTTPBadRequest('Bad request', "404")
 
-        [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
+        [status, jwt_result, username] = self.authentication_manager.verify_token(req.headers)
         if status is True:
             table = self.__generate_table_name__(table, username, end_point_type)
             if doc_id:
@@ -101,7 +101,7 @@ class UserDocumentResource:
         if valid_end_point is False:
             raise falcon.HTTPBadRequest('Bad request', "404")
 
-        [status, jwt_result, username] = self.authentication_manager.verify_jwt(req.headers)
+        [status, token_result, username] = self.authentication_manager.verify_token(req.headers)
         if status is True:
             table = self.__generate_table_name__(table, username, end_point_type)
             # Return note for particular ID
@@ -116,7 +116,7 @@ class UserDocumentResource:
             else:
                 resp.body = json.dumps({"Success": "Fail", "message": "No document found with supplied ID"})
         else:
-            resp.body = jwt_result
+            resp.body = token_result
 
     def __generate_table_name__(self, table, username, end_point_type):
         """Append the name of the user to the table name."""
