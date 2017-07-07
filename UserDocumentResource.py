@@ -15,7 +15,8 @@ class UserDocumentResource:
         self.authentication_manager = AuthenticationManager(user_manager)
 
     def validate_json_content(req, resp, resource, params):
-        if req.content_type not in "application/json":
+        print(req.content_type)
+        if req.content_type is None or req.content_type not in "application/json":
             msg = 'Body of request should be application/json'
             raise falcon.HTTPBadRequest('Bad request', msg)
 
@@ -114,7 +115,7 @@ class UserDocumentResource:
                     raise falcon.HTTPError(falcon.HTTP_400, 'Invalid JSON', 'Could not decode the request body. '
                                                                             'The ''JSON was incorrect.')
             else:
-                resp.body = json.dumps({"Success": "Fail", "message": "No document found with supplied ID"})
+                resp.body = json.dumps({"success": "fail", "message": "No document found with supplied ID"})
         else:
             resp.body = token_result
 

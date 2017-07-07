@@ -29,5 +29,5 @@ class AuthenticationManager:
         if 'AUTHORIZATION' in headers:
             return [True, headers['AUTHORIZATION'].split("Bearer")[1].replace(" ", "")]
         else:
-            return [False, '{"status": "Fail", "message": "No authentication token supplied"}']
+            return [False, '{"status": "fail", "message": "No authentication token supplied"}']
 
