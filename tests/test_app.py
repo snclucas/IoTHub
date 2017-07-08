@@ -10,6 +10,13 @@ class StashyTestCase(testing.TestCase):
     header_with_token = {"Content-Type": "application/json", "Authorization": "Bearer 0d24a98c5544578cedd7055d2a6eeb4d"}
     test_url = 'https://stashy.io/api'
 
+    test_user = {"_id": {"$oid": "5925bba47157aa4525b18580"}, "dataPrivacy": "public",
+                "addDatestampToPosts": "true", "publicEndpoints": [{"name": "bffgjg","endpoint":
+                    "4533ffd4e9e3","_id": {"$oid": "5956843316c9bb639fe9914f"}}],"allowedPublicEndpoints": 1,
+                 "tokens": [{"name": "my-token","token": "64504d74a4dc4bad26d863c0a4ab29e5","_id":
+                     {"$oid": "595fe42edf127b560b68963a"}}],"local": {"displayName": "test_user"},
+                 "accountType": "Free", "allowedTokens": 1 }
+
     def setUp(self):
         super(StashyTestCase, self).setUp()
         self.app = app.api
