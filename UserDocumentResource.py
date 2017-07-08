@@ -50,6 +50,7 @@ class UserDocumentResource:
 
         if user is None or valid_token is False:
             resp.body = token_result
+            return
 
         if end_point_type == 'public':
             self.__check_user_can_post_to_endpoint(user, table)
