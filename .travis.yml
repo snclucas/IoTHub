@@ -22,7 +22,7 @@ addons:
 
 before_script:
   - sleep 15
-  - mongo testing --eval 'db.users.insertOne({"tokens":"Yayt"})'
+  - mongo testing --eval 'db.users.insert({"tokens":"Yayt"})'
 
 
 script:
