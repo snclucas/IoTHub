@@ -7,7 +7,7 @@ import app
 
 class StashyTestCase(testing.TestCase):
 
-    header_with_token = {"Content-Type": "application/json", "Authorization": "Bearer 0d24a98c5544578cedd7055d2a6eeb4d"}
+    header_with_token = {"Content-Type": "application/json", "Authorization": "Bearer 64504d74a4dc4bad26d863c0a4ab29e5"}
     test_url = 'https://stashy.io/api'
 
     test_user = {"_id": {"$oid": "5925bba47157aa4525b18580"}, "dataPrivacy": "public",
