@@ -2,7 +2,19 @@ language: python
 python:
   - "3.5"
 cache: pip3
+
+env:
+- DB=mongodb
+- MONGODB_URI="'mongodb://localhost:27017/testing'"
+
 install:
   - pip install -r requirements.txt
+services:
+  - mongodb
+
+before_script:
+  - sleep 15
+  - mongo mydb_test --eval 'db.addUser("travis", "test");'
+
 script:
   - python -m unittest
