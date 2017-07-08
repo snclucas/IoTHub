@@ -1,5 +1,4 @@
 import json
-import jwt
 
 import config
 
