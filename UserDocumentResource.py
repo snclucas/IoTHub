@@ -56,7 +56,10 @@ class UserDocumentResource:
 
         metadata = self.__construct_metadata_from_query_params__(req.query_string)
 
-        add_datestamp = user['addDatestampToPosts']
+        if 'addDatestampToPosts' in user:
+            add_datestamp = user['addDatestampToPosts']
+        else:
+            add_datestamp = False
         table = self.__generate_table_name__(table, user['local']['displayName'], end_point_type)
 
         # If table does not exist, create it
