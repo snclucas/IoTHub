@@ -22,7 +22,7 @@ addons:
 
 before_script:
   - sleep 15
-  - mongo testing --eval   - mongo testing --eval 'db.users.insertOne({"addDatestampToPosts":"true","tokens":[{"name":"my-token","token":"64504d74a4dc4bad26d863c0a4ab29e5","_id":{"$oid":"595fe42edf127b560b68963a"}}]})'
+  - mongo testing --eval   - mongo testing --eval 'db.users.insert({"addDatestampToPosts":"true","tokens":[{"name":"my-token","token":"64504d74a4dc4bad26d863c0a4ab29e5","_id":{"$oid":"595fe42edf127b560b68963a"}}]})'
 
 
 script:
