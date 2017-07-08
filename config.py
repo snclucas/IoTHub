@@ -1,6 +1,6 @@
 import os
 
-db = os.getenv('DB', "")
+db = os.getenv('DB', "mongodb")
 
 mongodb_uri = os.getenv('MONGODB_URI', "")
 salt = os.getenv('salt', "")
