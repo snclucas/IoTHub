@@ -11,6 +11,15 @@ install:
 services:
   - mongodb
 
+addons:
+  apt:
+    sources:
+      - mongodb-upstart
+      - mongodb-3.0-precise
+    packages:
+      - mongodb-org-server
+      - mongodb-org-shell
+
 before_script:
   - sleep 15
   - mongo testing --eval 'db.users.insertOne({"tokens":"Yayt"})'
