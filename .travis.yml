@@ -4,8 +4,7 @@ python:
 cache: pip3
 
 env:
-- DB=mongodb
-- MONGODB_URI="'mongodb://localhost:27017/testing'"
+- DB=mongodb MONGODB_URI="mongodb://localhost:27017/testing"
 
 install:
   - pip install -r requirements.txt
