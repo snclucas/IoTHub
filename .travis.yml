@@ -13,7 +13,7 @@ services:
 
 before_script:
   - sleep 15
-  - mongo testing --eval 'db.users.insertOne({"tokens":"_id":"Yayt"})'
+  - mongo testing --eval 'db.users.insertOne({"tokens":"Yayt"})'
 
 
 script:
