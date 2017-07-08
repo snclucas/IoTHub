@@ -2,7 +2,7 @@ import os
 
 db = os.getenv('DB', "mongodb")
 
-mongodb_uri = os.getenv('MONGODB_URI', "mongodb://stashy:password@ds131782.mlab.com:31782/stashy")
+mongodb_uri = os.getenv('MONGODB_URI', "mongodb://username:password@host:port/db")
 salt = os.getenv('salt', "")
 
 rethink_db_host = os.getenv('RETHINK_DB_HOST', "localhost")

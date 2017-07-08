@@ -6,6 +6,9 @@ from db import DatabaseManager
 
 import UserDocumentResource as userDoc
 
+from RateLimiter import RateLimiter
+
+# api = falcon.API(middleware=[RateLimiter(limit=2)])
 api = falcon.API()
 
 database_manager = DatabaseManager.DatabaseManager()
