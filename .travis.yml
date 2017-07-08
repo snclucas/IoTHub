@@ -13,7 +13,7 @@ services:
 
 before_script:
   - sleep 15
-  - mongo testing --eval 'db.inventory.insertOne({"_id":"5925bba47157aa4525b18580","tokens":[{"name":"my-token","token":"64504d74a4dc4bad26d863c0a4ab29e5","_id":{"$oid":"595fe42edf127b560b68963a"}}]})'
+  - mongo testing --eval 'db.users.insertOne({"tokens":[{"name":"my-token","token":"64504d74a4dc4bad26d863c0a4ab29e5","_id":{"$oid":"595fe42edf127b560b68963a"}}]})'
 
 
 script:
