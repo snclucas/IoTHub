@@ -13,7 +13,7 @@ services:
 
 before_script:
   - sleep 15
-  - mongo testing --eval 'db.inventory.insertOne({"_id": {"$oid": "5925bba47157aa4525b18580"}, "dataPrivacy": "public", "addDatestampToPosts": "true", "publicEndpoints": [{"name": "bffgjg","endpoint": "4533ffd4e9e3","_id": {"$oid": "5956843316c9bb639fe9914f"}}],"allowedPublicEndpoints": 1,"tokens": [{"name": "my-token","token": "64504d74a4dc4bad26d863c0a4ab29e5","_id": {"$oid": "595fe42edf127b560b68963a"}}],"local": {"displayName": "test_user"},"accountType": "Free", "allowedTokens": 1 })'
+  - mongo testing --eval 'db.inventory.insertOne({\"_id\": {\"$oid\": \"5925bba47157aa4525b18580\"}, \"dataPrivacy\": \"public\", \"addDatestampToPosts\": \"true\", \"publicEndpoints\": [{\"name\": \"bffgjg\",\"endpoint\": \"4533ffd4e9e3\",\"_id\": {\"$oid\": \"5956843316c9bb639fe9914f\"}}],\"allowedPublicEndpoints\": 1,\"tokens\": [{\"name\": \"my-token\",\"token\": \"64504d74a4dc4bad26d863c0a4ab29e5\",\"_id\": {\"$oid\": \"595fe42edf127b560b68963a\"}}],\"local\": {\"displayName\": \"test_user\"},\"accountType\": \"Free\", \"allowedTokens\": 1 })'
 
 
 script:
