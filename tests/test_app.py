@@ -39,7 +39,10 @@ class TestStashyAuthorization(StashyTestCase):
                                        headers=self.header_with_token, protocol='http',
                                        body=json.dumps({"spam": "1", "eggs": "2"}))
 
-        json_data = result.json[0]
+        if isinstance(result.json, list):
+            json_data = result.json[0]
+        else:
+            json_data = result.json
 
         self.assertIn('id', json_data)
 

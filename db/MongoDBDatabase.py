@@ -25,7 +25,6 @@ class MongoDBDatabase(Database):
                 if "expiry" in result and date_util.__check_date__(result['expiry']):
                     expiry_date = date_util.parse_date(result['expiry'])
                     now = date_util.get_now()
-                    print(date_util.get_date_delta(now, expiry_date))
                     if date_util.get_date_delta(now, expiry_date) >= 0:
                         # Now check expiry date, if after delete document
                         self.delete_one(table, doc_id)
