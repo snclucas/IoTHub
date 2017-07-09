@@ -42,7 +42,3 @@ class UserManager:
         else:
             return False
 
-    def create_token_for_user(self, user, salt):
-        username = user['username']
-        is_admin = user['is_admin']
-        return jwt.encode({'username': username, 'is_admin': is_admin}, salt, algorithm='HS256')

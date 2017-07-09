@@ -24,7 +24,7 @@ class UserDocumentResource:
         [valid_end_point, end_point_type] = self.__check_endpoint__(endpoint_type)
 
         if valid_end_point is False:
-            raise falcon.HTTPBadRequest('Bad request', "404")
+            raise falcon.HTTPBadRequest('Bad request', "Invalid endpoint")
 
         [valid_token, token_result, user] = self.authentication_manager.verify_token(req.headers)
 

@@ -1,27 +1,34 @@
 from falcon import testing
 import json
-import requests
+from bson import ObjectId
+from pymongo import MongoClient
+import config
 
 import app
 
 
 class StashyTestCase(testing.TestCase):
     header_with_bad_token = {"Content-Type": "application/json", "Authorization": "Bearer 1"}
-    header_with_token = {"Content-Type": "application/json", "Authorization": "Bearer 0d24a98c5544578cedd7055d2a6eeb4d"}
+    header_with_token = {"Content-Type": "application/json", "Authorization": "Bearer 64504d74a4dc4bad26d863c0a4ab29e5"}
     test_url = 'https://stashy.io/api'
 
-    test_user = {"_id": {"$oid": "5925bba47157aa4525b18580"}, "dataPrivacy": "public",
-                "addDatestampToPosts": "true", "publicEndpoints": [{"name": "bffgjg","endpoint":
-                    "4533ffd4e9e3","_id": {"$oid": "5956843316c9bb639fe9914f"}}],"allowedPublicEndpoints": 1,
-                 "tokens": [{"name": "my-token","token": "64504d74a4dc4bad26d863c0a4ab29e5","_id":
-                     {"$oid": "595fe42edf127b560b68963a"}}],"local": {"displayName": "test_user"},
-                 "accountType": "Free", "allowedTokens": 1 }
+    test_user = {"_id": ObjectId("595fd9e5a2e6845470fa5d55"), "dataPrivacy": "public",
+                "addDatestampToPosts": "true", "publicEndpoints": [{"name": "bffgjg", "endpoint":
+                    "4533ffd4e9e3","_id": ObjectId("5956843316c9bb639fe9914f")}], "allowedPublicEndpoints": 1,
+                 "tokens": [{"name": "my-token", "token": "64504d74a4dc4bad26d863c0a4ab29e5", "_id":
+                     ObjectId("595fe42edf127b560b68963a")}], "local": {"displayName": "test_user"},
+                 "accountType": "Free", "allowedTokens": 1}
 
     test_doc = {"spam": "1", "eggs": "2"}
 
     def setUp(self):
         super(StashyTestCase, self).setUp()
         self.app = app.api
+        self.db_connection = MongoClient(config.mongodb_uri)
+        self.db = self.db_connection['stashy']
+        result = self.db['users'].find_one({"tokens.token": "64504d74a4dc4bad26d863c0a4ab29e5"})
+        if result is None:
+            self.db['users'].insert_one(self.test_user)
 
 
 class TestStashyAuthorization(StashyTestCase):
