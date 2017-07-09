@@ -82,7 +82,7 @@ class TestStashyAuthorization(StashyTestCase):
         if isinstance(result.json, list):
             json_data = result.json[0]
         else:
-            self.fail("Failed to save doc [" + result.json + "]")
+            self.fail("Failed to save doc [" + json.dumps(result.json) + "]")
 
         self.assertIn('id', json_data)
 
