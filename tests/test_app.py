@@ -6,8 +6,8 @@ import app
 
 
 class StashyTestCase(testing.TestCase):
-
-    header_with_token = {"Content-Type": "application/json", "Authorization": "Bearer 64504d74a4dc4bad26d863c0a4ab29e5"}
+    header_with_bad_token = {"Content-Type": "application/json", "Authorization": "Bearer 1"}
+    header_with_token = {"Content-Type": "application/json", "Authorization": "Bearer 0d24a98c5544578cedd7055d2a6eeb4d"}
     test_url = 'https://stashy.io/api'
 
     test_user = {"_id": {"$oid": "5925bba47157aa4525b18580"}, "dataPrivacy": "public",
@@ -16,6 +16,8 @@ class StashyTestCase(testing.TestCase):
                  "tokens": [{"name": "my-token","token": "64504d74a4dc4bad26d863c0a4ab29e5","_id":
                      {"$oid": "595fe42edf127b560b68963a"}}],"local": {"displayName": "test_user"},
                  "accountType": "Free", "allowedTokens": 1 }
+
+    test_doc = {"spam": "1", "eggs": "2"}
 
     def setUp(self):
         super(StashyTestCase, self).setUp()
@@ -33,35 +35,72 @@ class TestStashyAuthorization(StashyTestCase):
         result = self.simulate_request(method='GET', path='/d/test/docs', headers=headers, protocol='http')
         self.assertEqual(result.json, {"status": "fail", "message": "No user with that token"})
 
-    def test_post_get_valid_token(self):
+    def test_get_valid_token_no_doc(self):
+        result = self.get_document_with_good_header(doc_id="99")
+        self.assertEqual(result.json, {'message': 'Document not found', 'status': 'Fail'})
 
+    def test_post_get_delete_valid_token(self):
+        newdoc_id = self.test_save_document()
+
+        result = self.get_document_with_good_header(newdoc_id)
+
+        json_data_get = result.json
+
+        json_data_get.pop('id', None)
+        self.assertEqual(self.ordered(json_data_get), self.ordered(self.test_doc))
+
+        result = self.simulate_request(method='DELETE', path='/d/test/docs/' + newdoc_id,
+                                       headers=self.header_with_token, protocol='http')
+
+        self.assertEqual(result.json, {'status': 'success', 'id': newdoc_id})
+
+        result = self.get_document_with_good_header(newdoc_id)
+
+        json_data_get = result.json
+        self.assertEqual(json_data_get, {'message': 'Document not found', 'status': 'Fail'})
+
+    def test_delete_not_valid_token(self):
+        newdoc_id = self.test_save_document()
+
+        result = self.get_document_with_good_header(newdoc_id)
+
+        json_data_get = result.json
+
+        json_data_get.pop('id', None)
+        self.assertEqual(self.ordered(json_data_get), self.ordered(self.test_doc))
+
+        result = self.simulate_request(method='DELETE', path='/d/test/docs/' + newdoc_id,
+                                       headers=self.header_with_bad_token, protocol='http')
+
+        self.assertEqual(result.json, {'message': 'No user with that token', 'status': 'fail'})
+
+    def test_save_document(self):
         result = self.simulate_request(method='POST', path='/d/test/docs',
                                        headers=self.header_with_token, protocol='http',
-                                       body=json.dumps({"spam": "1", "eggs": "2"}))
+                                       body=json.dumps(self.test_doc))
 
         if isinstance(result.json, list):
             json_data = result.json[0]
         else:
-            json_data = result.json
+            self.fail("Failed to save doc [" + result.json + "]")
 
         self.assertIn('id', json_data)
 
         newdoc_id = json_data['id']
 
-        self.assertIn('spam', json_data)
-        self.assertEqual(json_data['spam'], "1")
+        json_data.pop('id', None)
+        self.assertEqual(self.ordered(json_data), self.ordered(self.test_doc))
 
-        self.assertIn('eggs', json_data)
-        self.assertEqual(json_data['eggs'], "2")
+        return newdoc_id
 
-        result = self.simulate_request(method='GET', path='/d/test/docs/' + newdoc_id,
+    def get_document_with_good_header(self, doc_id):
+        return self.simulate_request(method='GET', path='/d/test/docs/' + doc_id,
                                        headers=self.header_with_token, protocol='http')
 
-        json_data_get = result.json
-
-        self.assertIn('spam', json_data_get)
-        self.assertEqual(json_data_get['spam'], "1")
-
-        self.assertIn('eggs', json_data_get)
-        self.assertEqual(json_data_get['eggs'], "2")
-
+    def ordered(self, obj):
+        if isinstance(obj, dict):
+            return sorted((k, self.ordered(v)) for k, v in obj.items())
+        if isinstance(obj, list):
+            return sorted(self.ordered(x) for x in obj)
+        else:
+            return obj

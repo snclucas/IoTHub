@@ -90,11 +90,15 @@ class UserDocumentResource:
         if valid_end_point is False:
             raise falcon.HTTPBadRequest('Bad request', "404")
 
-        [status, jwt_result, username] = self.authentication_manager.verify_token(req.headers)
+        [status, jwt_result, user] = self.authentication_manager.verify_token(req.headers)
         if status is True:
-            table = self.__generate_table_name__(table, username, end_point_type)
+            table = self.__generate_table_name__(table, user['local']['displayName'], end_point_type)
             if doc_id:
-                resp.body = self.database.delete_one(table, doc_id)
+                result = self.database.delete_one(table, doc_id)
+                if result.deleted_count == 1:
+                    resp.body = json.dumps({"status": "success", "id": doc_id})
+                else:
+                    resp.body = json.dumps({{"status": "fail", "id": doc_id}})
             else:
                 resp.body = self.database.delete_all(table)
         else:
@@ -106,9 +110,9 @@ class UserDocumentResource:
         if valid_end_point is False:
             raise falcon.HTTPBadRequest('Bad request', "404")
 
-        [status, token_result, username] = self.authentication_manager.verify_token(req.headers)
+        [status, token_result, user] = self.authentication_manager.verify_token(req.headers)
         if status is True:
-            table = self.__generate_table_name__(table, username, end_point_type)
+            table = self.__generate_table_name__(table, user['local']['displayName'], end_point_type)
             # Return note for particular ID
             if doc_id:
                 try:
