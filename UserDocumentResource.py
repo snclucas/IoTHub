@@ -15,7 +15,6 @@ class UserDocumentResource:
         self.authentication_manager = AuthenticationManager(user_manager)
 
     def validate_json_content(req, resp, resource, params):
-        print(req.content_type)
         if req.content_type is None or req.content_type not in "application/json":
             msg = 'Body of request should be application/json'
             raise falcon.HTTPBadRequest('Bad request', msg)
@@ -38,7 +37,7 @@ class UserDocumentResource:
             resp.body = self.database.get_one_by_id(table, doc_id)
         else:
             [filter_by, sort_by] = self.__construct_filter_from_query_params__(req.query_string)
-            resp.body = self.database.get_all(table, filter_by, sort_by)
+            resp.body = self.database.get_all(table, filter_by=filter_by, select_by=None, sort=sort_by)
 
     @falcon.before(validate_json_content)
     def on_post(self, req, resp, endpoint_type, table=None):
