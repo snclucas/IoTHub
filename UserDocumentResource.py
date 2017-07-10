@@ -197,9 +197,10 @@ class UserDocumentResource:
 
     def __check_user_can_post_to_endpoint(self, user, table):
         allowed_to_post_to_endpoint = False
-        for public_endpoint in user['publicEndpoints']:
-            if public_endpoint['endpoint'] == table:
-                allowed_to_post_to_endpoint = True
+        if 'publicEndpoints' in user:
+            for public_endpoint in user['publicEndpoints']:
+                if public_endpoint['endpoint'] == table:
+                    allowed_to_post_to_endpoint = True
 
-        if allowed_to_post_to_endpoint is False:
-            raise falcon.HTTPBadRequest('Bad request', "Cannot post to this endpoint")
+            if allowed_to_post_to_endpoint is False:
+                raise falcon.HTTPBadRequest('Bad request', "Cannot post to this endpoint")

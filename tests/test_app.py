@@ -10,20 +10,25 @@ import app
 class StashyTestCase(testing.TestCase):
     header_with_bad_token = {"Content-Type": "application/json", "Authorization": "Bearer 1"}
     header_with_token = {"Content-Type": "application/json", "Authorization": "Bearer 64504d74a4dc4bad26d863c0a4ab29e5"}
-    test_url = 'https://stashy.io/api'
 
-    test_user = {"_id": ObjectId("595fd9e5a2e6845470fa5d55"), "dataPrivacy": "public",
-                "addDatestampToPosts": "true", "publicEndpoints": [{"name": "bffgjg", "endpoint":
-                    "4533ffd4e9e3","_id": ObjectId("5956843316c9bb639fe9914f")}], "allowedPublicEndpoints": 1,
+    test_user = {"_id": ObjectId("595fd9e5a2e6845470fa5d55"),
+                 "dataPrivacy": "public",
+                 "addDatestampToPosts": "true",
+                 "publicEndpoints": [{"name": "bffgjg", "endpoint": "4533ffd4e9e3", "_id":
+                                        ObjectId("5956843316c9bb639fe9914f")}],
+                 "allowedPublicEndpoints": 1,
                  "tokens": [{"name": "my-token", "token": "64504d74a4dc4bad26d863c0a4ab29e5", "_id":
-                     ObjectId("595fe42edf127b560b68963a")}], "local": {"displayName": "test_user"},
+                            ObjectId("595fe42edf127b560b68963a")}], "local": {"displayName": "test_user"},
                  "accountType": "Free", "allowedTokens": 1}
 
     test_doc = {"spam": "1", "eggs": "2"}
 
+    test_doc_explode = {"docs": [{"spam": "1", "eggs": "2"}, {"spam": "10", "eggs": "20"}]}
+
     def setUp(self):
         super(StashyTestCase, self).setUp()
         self.app = app.api
+        # Insert a test user if not present
         self.db_connection = MongoClient(config.mongodb_uri)
         self.db = self.db_connection['stashy']
         result = self.db['users'].find_one({"tokens.token": "64504d74a4dc4bad26d863c0a4ab29e5"})
@@ -100,9 +105,25 @@ class TestStashyAuthorization(StashyTestCase):
 
         return newdoc_id
 
+    def test_save_document_with_explode(self):
+        params = {"st::explode": "docs"}
+        result = self.simulate_request(method='POST', path='/d/test/docs',
+                                       headers=self.header_with_token, protocol='http', params=params,
+                                       body=json.dumps(self.test_doc_explode))
+
+        if isinstance(result.json, list):
+            json_data = result.json
+        else:
+            self.fail("Failed to save doc [" + json.dumps(result.json) + "]")
+
+        for doc in json_data:
+            self.assertIn('id', doc)
+
+        self.assertEqual(len(json_data), 2)
+
     def get_document_with_good_header(self, doc_id):
         return self.simulate_request(method='GET', path='/d/test/docs/' + doc_id,
-                                       headers=self.header_with_token, protocol='http')
+                                     headers=self.header_with_token, protocol='http')
 
     def ordered(self, obj):
         if isinstance(obj, dict):
