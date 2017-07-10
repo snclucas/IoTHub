@@ -52,7 +52,9 @@ class UserDocumentResource:
             return
 
         if end_point_type == 'public':
-            self.__check_user_can_post_to_endpoint(user, table)
+            if self.__check_user_can_post_to_endpoint(user, table) is False:
+                resp.body = json.dumps({"status": "fail", "message": "Cannot post to this endpoint"})
+                return
 
         metadata = self.__construct_metadata_from_query_params__(req.query_string)
 
@@ -145,6 +147,8 @@ class UserDocumentResource:
                 docs[i]['created'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             self.database.save(docs[i], table)
             doc_save_result.append(docs[i])
+        if len(doc_save_result) == 1:
+            doc_save_result = doc_save_result[0]
         return doc_save_result
 
     def __construct_filter_from_query_params__(self, query_params):
@@ -202,5 +206,4 @@ class UserDocumentResource:
                 if public_endpoint['endpoint'] == table:
                     allowed_to_post_to_endpoint = True
 
-            if allowed_to_post_to_endpoint is False:
-                raise falcon.HTTPBadRequest('Bad request', "Cannot post to this endpoint")
+        return allowed_to_post_to_endpoint

@@ -20,8 +20,6 @@ addons:
 
 before_script:
   - sleep 15
-  - mongo testing --eval 'db.users.insert({"addDatestampToPosts":"true","tokens":[{"name":"my-token","token":"0d24a98c5544578cedd7055d2a6eeb4d"}]})'
-  - mongo testing --eval 'db.users.find()'
 
 
 script:

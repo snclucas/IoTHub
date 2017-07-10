@@ -9,17 +9,33 @@ import app
 
 class StashyTestCase(testing.TestCase):
     header_with_bad_token = {"Content-Type": "application/json", "Authorization": "Bearer 1"}
-    header_with_token = {"Content-Type": "application/json", "Authorization": "Bearer 64504d74a4dc4bad26d863c0a4ab29e5"}
+    header_with_user1_token = {"Content-Type": "application/json",
+                               "Authorization": "Bearer 1111111111111111111111111"}
+    header_with_user2_token = {"Content-Type": "application/json",
+                               "Authorization": "Bearer 222222222222222222222"}
 
-    test_user = {"_id": ObjectId("595fd9e5a2e6845470fa5d55"),
-                 "dataPrivacy": "public",
-                 "addDatestampToPosts": "true",
-                 "publicEndpoints": [{"name": "bffgjg", "endpoint": "4533ffd4e9e3", "_id":
-                                        ObjectId("5956843316c9bb639fe9914f")}],
-                 "allowedPublicEndpoints": 1,
-                 "tokens": [{"name": "my-token", "token": "64504d74a4dc4bad26d863c0a4ab29e5", "_id":
-                            ObjectId("595fe42edf127b560b68963a")}], "local": {"displayName": "test_user"},
-                 "accountType": "Free", "allowedTokens": 1}
+    testuser1_endpoint = "testuser1endpoint"
+    testuser2_endpoint = "testuser2endpoint"
+
+    test_user1 = {"_id": ObjectId("595fd9e5a2e6845470fa5d55"),
+                  "dataPrivacy": "public",
+                  "addDatestampToPosts": "true",
+                  "publicEndpoints": [{"name": "bffgjg", "endpoint": "testuser1endpoint", "_id":
+                      ObjectId("5956843316c9bb639fe9914f")}],
+                  "allowedPublicEndpoints": 1,
+                  "tokens": [{"name": "my-token1", "token": "1111111111111111111111111", "_id":
+                      ObjectId("595fe42edf127b560b68963a")}], "local": {"displayName": "test_user"},
+                  "accountType": "Free", "allowedTokens": 1}
+
+    test_user2 = {"_id": ObjectId("595fd9e5a2e6845470fa5656"),
+                  "dataPrivacy": "public",
+                  "addDatestampToPosts": "true",
+                  "publicEndpoints": [{"name": "bffgjg", "endpoint": "testuser2endpoint", "_id":
+                      ObjectId("5956843316c9bb639fe9914f")}],
+                  "allowedPublicEndpoints": 1,
+                  "tokens": [{"name": "my-token2", "token": "222222222222222222222", "_id":
+                      ObjectId("595fe42edf127b560b68963a")}], "local": {"displayName": "test_user"},
+                  "accountType": "Free", "allowedTokens": 1}
 
     test_doc = {"spam": "1", "eggs": "2"}
 
@@ -31,9 +47,12 @@ class StashyTestCase(testing.TestCase):
         # Insert a test user if not present
         self.db_connection = MongoClient(config.mongodb_uri)
         self.db = self.db_connection['stashy']
-        result = self.db['users'].find_one({"tokens.token": "64504d74a4dc4bad26d863c0a4ab29e5"})
+        result = self.db['users'].find_one({"tokens.token": "1111111111111111111111111"})
         if result is None:
-            self.db['users'].insert_one(self.test_user)
+            self.db['users'].insert_one(self.test_user1)
+        result = self.db['users'].find_one({"tokens.token": "222222222222222222222"})
+        if result is None:
+            self.db['users'].insert_one(self.test_user2)
 
 
 class TestStashyAuthorization(StashyTestCase):
@@ -62,7 +81,7 @@ class TestStashyAuthorization(StashyTestCase):
         self.assertEqual(self.ordered(json_data_get), self.ordered(self.test_doc))
 
         result = self.simulate_request(method='DELETE', path='/d/test/docs/' + newdoc_id,
-                                       headers=self.header_with_token, protocol='http')
+                                       headers=self.header_with_user1_token, protocol='http')
 
         self.assertEqual(result.json, {'status': 'success', 'id': newdoc_id})
 
@@ -88,13 +107,10 @@ class TestStashyAuthorization(StashyTestCase):
 
     def test_save_document(self):
         result = self.simulate_request(method='POST', path='/d/test/docs',
-                                       headers=self.header_with_token, protocol='http',
+                                       headers=self.header_with_user1_token, protocol='http',
                                        body=json.dumps(self.test_doc))
 
-        if isinstance(result.json, list):
-            json_data = result.json[0]
-        else:
-            self.fail("Failed to save doc [" + json.dumps(result.json) + "]")
+        json_data = result.json
 
         self.assertIn('id', json_data)
 
@@ -108,7 +124,7 @@ class TestStashyAuthorization(StashyTestCase):
     def test_save_document_with_explode(self):
         params = {"st::explode": "docs"}
         result = self.simulate_request(method='POST', path='/d/test/docs',
-                                       headers=self.header_with_token, protocol='http', params=params,
+                                       headers=self.header_with_user1_token, protocol='http', params=params,
                                        body=json.dumps(self.test_doc_explode))
 
         if isinstance(result.json, list):
@@ -121,9 +137,41 @@ class TestStashyAuthorization(StashyTestCase):
 
         self.assertEqual(len(json_data), 2)
 
+    def test_post_to_public_endpoint(self):
+        result = self.simulate_request(method='POST', path='/p/testuser1endpoint/docs',
+                                       headers=self.header_with_user1_token, protocol='http',
+                                       body=json.dumps(self.test_doc))
+
+        json_data = result.json
+        newdoc_id = json_data['id']
+        json_data.pop('id', None)
+        self.assertEqual(self.ordered(json_data), self.ordered(self.test_doc))
+
+        result = self.simulate_request(method='POST', path='/p/testuser1endpoint/docs',
+                                       headers=self.header_with_user2_token, protocol='http',
+                                       body=json.dumps(self.test_doc))
+
+        self.assertEqual(self.ordered({"status": "fail", "message": "Cannot post to this endpoint"}),
+                         self.ordered(result.json))
+
+        # Now both users get the public data
+        result = self.simulate_request(method='GET', path='/p/testuser1endpoint/docs/' + newdoc_id,
+                                       headers=self.header_with_user1_token, protocol='http')
+
+        json_data = result.json
+        json_data.pop('id', None)
+        self.assertEqual(self.ordered(json_data), self.ordered(self.test_doc))
+
+        result = self.simulate_request(method='GET', path='/p/testuser1endpoint/docs/' + newdoc_id,
+                                       headers=self.header_with_user2_token, protocol='http')
+
+        json_data = result.json
+        json_data.pop('id', None)
+        self.assertEqual(self.ordered(json_data), self.ordered(self.test_doc))
+
     def get_document_with_good_header(self, doc_id):
         return self.simulate_request(method='GET', path='/d/test/docs/' + doc_id,
-                                     headers=self.header_with_token, protocol='http')
+                                     headers=self.header_with_user1_token, protocol='http')
 
     def ordered(self, obj):
         if isinstance(obj, dict):

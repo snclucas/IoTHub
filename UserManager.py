@@ -22,7 +22,7 @@ class UserManager:
             return json.loads({"status": "fail", "message": "Bad user data"})
 
     def find_user_by_token(self, token):
-        select_by = {"local.displayName": "1"}
+        select_by = {"local.displayName": "1", "publicEndpoints": 1}
         result = self.database.get_all('users', filter_by={"tokens.token": token}, select_by=select_by, sort=None)
         if result is not None:
             return json.loads(result)[0]
