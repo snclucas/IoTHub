@@ -72,8 +72,8 @@ class MongoDBDatabase(Database):
         return json.dumps(result)
 
     def delete_all(self, table):
-        result = self.db[table].drop()
-        return json.dumps(result, cls=JSONEncoder).replace('_id', 'id')
+        result = self.db[table].delete_many({})
+        return result.deleted_count
 
     def delete_one(self, table, doc_id):
         return self.db[table].delete_one({'_id': ObjectId(doc_id)})

@@ -22,3 +22,4 @@ api.add_route('/{endpoint_type}/{table}/docs', userDoc.UserDocumentResource(data
 api.add_route('/{endpoint_type}/{table}/docs/{doc_id}', userDoc.UserDocumentResource(database, user_manager))
 api.add_route('/{endpoint_type}/{table}/docs/count', userDoc.UserDocumentResource(database, user_manager))
 api.add_route('/{endpoint_type}/{table}/docs/delete_all', userDoc.UserDocumentResource(database, user_manager))
+api.add_route('/{endpoint_type}/{table}/docs/delete/{doc_id}', userDoc.UserDocumentResource(database, user_manager))

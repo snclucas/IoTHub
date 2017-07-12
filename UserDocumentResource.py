@@ -102,7 +102,8 @@ class UserDocumentResource:
                 else:
                     resp.body = json.dumps({{"status": "fail", "id": doc_id}})
             else:
-                resp.body = self.database.delete_all(table)
+                deleted_count = self.database.delete_all(table)
+                resp.body = json.dumps({"status": "success", "deleted_count": deleted_count})
         else:
             resp.body = jwt_result
 
