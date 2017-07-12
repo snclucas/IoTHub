@@ -53,7 +53,7 @@ class MongoDBDatabase(Database):
         try:
             cursor = self.db[table].find(filter_by, select_by).sort(sort)
             if cursor.count() == 0:
-                return json.dumps({"status": "success", "message": "No documents"})
+                return None
             result = [i for i in cursor]
             return json.dumps(result, cls=JSONEncoder).replace('_id', 'id')
         except OperationFailure:

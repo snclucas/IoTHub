@@ -36,8 +36,13 @@ class UserDocumentResource:
         if doc_id:
             resp.body = self.database.get_one_by_id(table, doc_id)
         else:
-            [filter_by, sort_by] = self.__construct_filter_from_query_params__(req.query_string)
-            resp.body = self.database.get_all(table, filter_by=filter_by, select_by=None, sort=sort_by)
+            filter_by = self.__construct_filter_from_query_params__(req.query_string)
+            sort_by = self.__parse_sort_from_query_params__(req.query_string)
+            result = self.database.get_all(table, filter_by=filter_by, select_by=None, sort=sort_by)
+            if result is None:
+                resp.body = json.dumps({"status": "Fail", "message": "Document not found"})
+            else:
+                resp.body = self.database.get_all(table, filter_by=filter_by, select_by=None, sort=sort_by)
 
     @falcon.before(validate_json_content)
     def on_post(self, req, resp, endpoint_type, table=None):
@@ -152,8 +157,7 @@ class UserDocumentResource:
             doc_save_result = doc_save_result[0]
         return doc_save_result
 
-    def __construct_filter_from_query_params__(self, query_params):
-        filter_val = {}
+    def __parse_sort_from_query_params__(self, query_params):
         sort_by = [('_id', 1)]
         q_params = falcon.uri.parse_query_string(query_params, keep_blank_qs_values=False, parse_qs_csv=True)
         sortby_val = '_id'
@@ -172,12 +176,17 @@ class UserDocumentResource:
         if sortby is True:
             sort_by = [(sortby_val, int(order_val))]
 
+        return sort_by
+
+    def __construct_filter_from_query_params__(self, query_params):
+        filter_val = {}
+        q_params = falcon.uri.parse_query_string(query_params, keep_blank_qs_values=False, parse_qs_csv=True)
         # Get user supplied filters
         for key, value in q_params.items():
             if not self.__reserved__word__(key):
                 filter_val[key] = value
 
-        return [filter_val, sort_by]
+        return filter_val
 
     def __construct_metadata_from_query_params__(self, query_params):
         metadata = {}
