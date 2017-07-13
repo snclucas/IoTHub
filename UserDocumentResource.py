@@ -1,6 +1,7 @@
 import json
 import falcon
 from datetime import *
+from bson import ObjectId
 
 import config
 from util.JSONEncoder import JSONEncoder
@@ -101,14 +102,20 @@ class UserDocumentResource:
         if status is True:
             table = self.__generate_table_name__(table, user['local']['displayName'], end_point_type)
             if doc_id:
-                result = self.database.delete_one(table, doc_id)
-                if result.deleted_count == 1:
-                    resp.body = json.dumps({"status": "success", "id": doc_id})
+                if doc_id == "all":
+                    deleted_count = self.database.delete_all(table)
+                    resp.body = json.dumps({"status": "success", "deleted_count": deleted_count})
                 else:
-                    resp.body = json.dumps({{"status": "fail", "id": doc_id}})
+                    result = self.database.delete(table, {'_id': ObjectId(doc_id)})
+                    if result.deleted_count == 1:
+                        resp.body = json.dumps({"status": "success", "id": doc_id})
+                    else:
+                        resp.body = json.dumps({{"status": "fail", "id": doc_id}})
             else:
-                deleted_count = self.database.delete_all(table)
-                resp.body = json.dumps({"status": "success", "deleted_count": deleted_count})
+                filter_by = self.__construct_filter_from_query_params__(req.query_string)
+                result = self.database.delete(table, filter_by)
+                resp.body = json.dumps({"status": "success", "deleted_count": result.deleted_count})
+
         else:
             resp.body = jwt_result
 

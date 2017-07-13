@@ -11,7 +11,6 @@ from util.JSONEncoder import JSONEncoder
 
 PROJECT_DB = 'stashy'
 
-
 class MongoDBDatabase(Database):
 
     def __init__(self, mongodb_uri):
@@ -75,10 +74,7 @@ class MongoDBDatabase(Database):
         result = self.db[table].delete_many({})
         return result.deleted_count
 
-    def delete_one(self, table, doc_id):
-        return self.db[table].delete_one({'_id': ObjectId(doc_id)})
+    def delete(self, table, filter_by=None):
+        return self.db[table].delete_many(filter_by)
 
-    def delete_where(self, table, where, is_val):
-        result = self.db[table].delete_many({where: is_val})
-        return json.dumps(result, cls=JSONEncoder).replace('_id', 'id')
 

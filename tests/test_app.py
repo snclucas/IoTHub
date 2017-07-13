@@ -54,6 +54,11 @@ class StashyTestCase(testing.TestCase):
         if result is None:
             self.db['users'].insert_one(self.test_user2)
 
+    def tearDown(self):
+        super(StashyTestCase, self).tearDown()
+        self.simulate_request(method='DELETE', path='/d/test/docs/all',
+                                       headers=self.header_with_user1_token, protocol='http')
+
 
 class TestStashyAuthorization(StashyTestCase):
     def test_get_no_token(self):
@@ -169,8 +174,29 @@ class TestStashyAuthorization(StashyTestCase):
         json_data.pop('id', None)
         self.assertEqual(self.ordered(json_data), self.ordered(self.test_doc))
 
+    def test_delete_with_filter(self):
+        self.test_save_document_with_explode()
+
+        result_get = self.get_documents_with_good_header()
+        # Should be 2 documents
+        self.assertEqual(len(result_get.json), 2)
+
+        filter_by = {"spam": "1"}
+        result_post = self.simulate_request(method='DELETE', path='/d/test/docs',
+                                            headers=self.header_with_user1_token, protocol='http', params=filter_by)
+
+        self.assertEqual(result_post.json, {'status': 'success', 'deleted_count': 1})
+
+        result_get = self.get_documents_with_good_header()
+        # Now should be 1 document
+        self.assertEqual(len(result_get.json), 1)
+
     def get_document_with_good_header(self, doc_id):
         return self.simulate_request(method='GET', path='/d/test/docs/' + doc_id,
+                                     headers=self.header_with_user1_token, protocol='http')
+
+    def get_documents_with_good_header(self):
+        return self.simulate_request(method='GET', path='/d/test/docs',
                                      headers=self.header_with_user1_token, protocol='http')
 
     def ordered(self, obj):
