@@ -22,11 +22,14 @@ class UserDocumentResource:
 
     @falcon.before(validate_json_content)
     def on_get(self, req, resp, endpoint_type, table=None, doc_id=None):
+        print(req.uri_template)
+        print(table)
+        print(doc_id)
         [valid_end_point, end_point_type] = self.__check_endpoint__(endpoint_type)
 
         if valid_end_point is False:
             raise falcon.HTTPBadRequest('Bad request', "Invalid endpoint")
-
+        print("after valid")
         [valid_token, token_result, user] = self.authentication_manager.verify_token(req.headers)
 
         if valid_token is False or user is None:
@@ -35,8 +38,10 @@ class UserDocumentResource:
 
         table = self.__generate_table_name__(table, user['local']['displayName'], end_point_type)
         if doc_id:
+            print("here1")
             resp.body = self.database.get_one_by_id(table, doc_id)
         else:
+            print("here2")
             filter_by = self.__construct_filter_from_query_params__(req.query_string)
             sort_by = self.__parse_sort_from_query_params__(req.query_string)
             result = self.database.get_all(table, filter_by=filter_by, select_by=None, sort=sort_by)
@@ -102,9 +107,6 @@ class UserDocumentResource:
         if status is True:
             table = self.__generate_table_name__(table, user['local']['displayName'], end_point_type)
             if doc_id:
-                print("doc_id = ")
-                print(doc_id)
-                print(req.uri_template)
                 if doc_id == "all":
                     deleted_count = self.database.delete_all(table)
                     resp.body = json.dumps({"status": "success", "deleted_count": deleted_count})
