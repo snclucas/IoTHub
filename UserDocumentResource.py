@@ -102,6 +102,9 @@ class UserDocumentResource:
         if status is True:
             table = self.__generate_table_name__(table, user['local']['displayName'], end_point_type)
             if doc_id:
+                print("doc_id = ")
+                print(doc_id)
+                print(req.uri_template)
                 if doc_id == "all":
                     deleted_count = self.database.delete_all(table)
                     resp.body = json.dumps({"status": "success", "deleted_count": deleted_count})
