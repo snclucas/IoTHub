@@ -5,6 +5,7 @@ import ServerInfo as serverInfo
 from db import DatabaseManager
 
 import UserDocumentResource as userDoc
+import NoEndpointResource as noDoc
 
 from RateLimiter import RateLimiter
 
@@ -25,3 +26,8 @@ api.add_route('/{endpoint_type}/{table}/docs', userDoc.UserDocumentResource(data
 api.add_route('/{endpoint_type}/{table}/docs/{doc_id}', userDoc.UserDocumentResource(database, user_manager))
 api.add_route('/{endpoint_type}/{table}/docs/count', userDoc.UserDocumentResource(database, user_manager))
 api.add_route('/{endpoint_type}/{table}/docs/delete_all', userDoc.UserDocumentResource(database, user_manager))
+
+api.add_route('/{endpoint_type}/{table}/{catch}', noDoc.NoEndpointResource())
+api.add_route('/{endpoint_type}/{table}', noDoc.NoEndpointResource())
+api.add_route('/{endpoint_type}', noDoc.NoEndpointResource())
+api.add_route('/', noDoc.NoEndpointResource())

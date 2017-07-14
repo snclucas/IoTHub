@@ -191,13 +191,6 @@ class TestStashyAuthorization(StashyTestCase):
         # Now should be 1 document
         self.assertEqual(len(result_get.json), 1)
 
-    def test_get_invalid(self):
-
-        result = self.simulate_request(method='GET', path='/d/test/wrong',
-                                       headers=self.header_with_user1_token, protocol='http')
-
-        self.assertEqual(result.text, 1)
-
     def get_document_with_good_header(self, doc_id):
         return self.simulate_request(method='GET', path='/d/test/docs/' + doc_id,
                                      headers=self.header_with_user1_token, protocol='http')
