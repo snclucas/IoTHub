@@ -62,7 +62,7 @@ class StashyTestCase(testing.TestCase):
 
 class TestStashyAuthorization(StashyTestCase):
 
-    def test_get_invalid_endpoint(self):
+    def test_get_invalid_action(self):
 
         result = self.simulate_request(method='GET', path='/d/test/wrong',
                                        headers=self.header_with_user1_token, protocol='http')
@@ -81,11 +81,18 @@ class TestStashyAuthorization(StashyTestCase):
         result = self.simulate_request(method='GET', path='/d',
                                        headers=self.header_with_user1_token, protocol='http')
 
-        self.assertEqual(result.json, {"status": "fail", "message": "Document not found"})
+        self.assertEqual(result.json, {"status": "fail", "message": "Endpoint not specified"})
+
+    def test_get_invalid_endpoint_type(self):
+
+        result = self.simulate_request(method='GET', path='/wrong',
+                                       headers=self.header_with_user1_token, protocol='http')
+
+        self.assertEqual(result.json, {"status": "fail", "message": "Invalid endpoint type"})
 
     def test_get_invalid_no_endpoint(self):
 
         result = self.simulate_request(method='GET', path='/',
                                        headers=self.header_with_user1_token, protocol='http')
 
-        self.assertEqual(result.json, {"status": "fail", "message": "Document not found"})
+        self.assertEqual(result.json, {"status": "fail", "message": "Missing endpoint type"})
