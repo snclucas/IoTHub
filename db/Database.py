@@ -32,9 +32,6 @@ class Database:
         return
 
     @abc.abstractmethod
-    def delete_one(self, table, doc_id):
+    def delete(self, table, filter_by=None):
         return
 
-    @abc.abstractmethod
-    def delete_where(self, table, where, is_val):
-        return

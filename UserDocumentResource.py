@@ -156,6 +156,10 @@ class UserDocumentResource:
     def __save_documents__(self, table, docs, add_datestamp):
         doc_save_result = []
         for i in range(len(docs)):
+            if isinstance(docs[i], dict) is False:
+                print(json.loads(docs[i]))
+                docs[i] = json.loads(docs[i])
+                #return {"status": "fail", "message": "Bad JSON"}
             if add_datestamp:
                 docs[i]['created'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             self.database.save(docs[i], table)

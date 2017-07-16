@@ -1,11 +1,4 @@
 import json
-import falcon
-from datetime import *
-from bson import ObjectId
-
-import config
-from util.JSONEncoder import JSONEncoder
-from AuthenticationManager import AuthenticationManager
 
 
 class NoEndpointResource:

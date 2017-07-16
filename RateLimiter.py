@@ -18,8 +18,6 @@ class RateLimiter(object):
         key = "{0}: {1}".format(requester, req.path)
         print('Key: {0}'.format(key))
 
-
-
         try:
             remaining = self.limit - int(self.redis.get(key))
         except (ValueError, TypeError):

@@ -10,7 +10,7 @@ class ServerInfo:
 
 class ServerInfoHTML:
 
-   def on_get(self, req, resp):
+    def on_get(self, req, resp):
         resp.status = falcon.HTTP_200
         resp.content_type = 'text/html'
         with open('api.html', 'r') as f:

@@ -11,6 +11,7 @@ from util.JSONEncoder import JSONEncoder
 
 PROJECT_DB = 'stashy'
 
+
 class MongoDBDatabase(Database):
 
     def __init__(self, mongodb_uri):
